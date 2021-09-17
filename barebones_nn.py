@@ -3,6 +3,7 @@ import numpy
 import pandas as pd
 from keras.models import Sequential
 from keras.layers import Dense
+import evaluate.py as e
 import parse_csv as p
 import parse_csv_small as ps
 from keras.wrappers.scikit_learn import KerasRegressor
@@ -47,6 +48,7 @@ attributes = pca.transform(attributes)
 
 
 for state in range(1):
+
     x_train, x_test, y_train, y_test = train_test_split(attributes, classifier2, test_size=0.2, random_state=state)
     # clf = linear_model.LogisticRegression(random_state=0).fit(x_train, y_train)
     # clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
@@ -57,20 +59,11 @@ for state in range(1):
     answers = y_test
     # answers = y_test.tolist()
 
-    prediction_length = len(predictions)
-    for i in range(prediction_length):
-        total_predictions += 1
-        if predictions[i] == answers[i]:
-            accuracy += 1
-            loss_over_samples += 0
-        else:
-            if testing_binary_classifier:
-                loss_over_samples += round(abs(predictions[i] - answers[i]))
-            else:
-                print(predictions[i] - answers[i])
-                print(round(predictions[i] - round(answers[i])))
-                loss_over_samples += round(abs(predictions[i] - answers[i]))
-    
+    loss, successes, prediction_count = e.evaluate(predictions, answers)
+    accuracy += successes
+    loss_over_samples += loss
+    total_predictions += prediction_count
+
     print("ANSWERS: \n")
     print(answers)
     print("PREDICTIONS: \n")
