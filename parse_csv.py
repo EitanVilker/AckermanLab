@@ -1,13 +1,20 @@
 import pandas as pd
 import numpy as np
 from sklearn import preprocessing
+from sklearn import feature_selection
 
-def parse_csv(dim_x, dim_y, filename=False, data=False):
+
+''' If filename given, returns attributes and classifiers based on the csv.
+If not, uses the data object being passed in. 
+This is to make it easier if only parts of the dataset are being tested, 
+like when working with individual arms '''
+def parse_csv(dim_x, dim_y, filename=False, data=False, group_number=0):
 
     if filename != False:
         if data == False:
             data = pd.read_csv(filename)
-
+    elif data == False:
+        return None
     attributes = data.drop('Group', axis=1)
     attributes = attributes.drop('Time to Infection', axis=1) # Classifier 4
     attributes = attributes.drop('Resisted Infection?', axis=1) # Classifier 1
@@ -30,10 +37,11 @@ def parse_csv(dim_x, dim_y, filename=False, data=False):
     # print(scaler.mean_)
     scaled_attributes = scaler.transform(attributes)
     
-    separate_into_buckets(classifier3)
+    separate_into_buckets(classifier3, group_number)
             
     return scaled_attributes, classifier1, classifier2, classifier3, classifier4, averages, standard_deviations
 
+''' Function to separate the attributes into the three individual arms '''
 def separate_into_groups(filename):
 
     data = pd.read_csv(filename)
@@ -41,31 +49,20 @@ def separate_into_groups(filename):
     group_b = data.copy()
     group_c = data.copy()
 
-    length = len(data)
-    for i in range(length):
-
-        group_value = data['Group'][i]
-
-        if group_value == "IM239":
-            group_b.drop(i)
-            group_c.drop(i)
-
-        elif group_value == "IM mosaic":
-            group_a.drop(i)
-            group_c.drop(i)
-
-        elif group_value == "AE239":
-            group_a.drop(i)
-            group_b.drop(i)
+    group_a = group_a.loc[(group_a["Group"] == "IM239")]
+    group_b = group_b.loc[(group_b["Group"] == "IM mosaic")]
+    group_c = group_c.loc[(group_c["Group"] == "AE239")]
 
     return group_a, group_b, group_c
 
-
-def separate_into_buckets(classifier3):
+''' Function to create a new classifier that lumps the Time to Infection classifier into 4 "buckets."
+The quartiles are not identified automatically, 
+as there was no point in making that functional when it is highly unlikely new data are collected '''
+def separate_into_buckets(classifier3, group_number=0):
 
     # blank, bins = pd.qcut(classifier3, 4, retbins=True) # Identify the quartile ranges
     # print(bins)
-    for i in range(len(classifier3)):
+    for i in range(group_number * 20, group_number * 20 + len(classifier3)):
         if classifier3[i] <= 2:
             classifier3[i] = 0
 
@@ -78,6 +75,8 @@ def separate_into_buckets(classifier3):
         else:
             classifier3[i] = 3
 
+''' Function that allows a model to make predictions using raw data,
+transforming it using the average and standard deviation in lieu of the StandardScaler '''
 def predict_raw_data(model, using_nn, averages, standard_deviations, new_data):
 
     for i in range(len(new_data)):
@@ -87,3 +86,10 @@ def predict_raw_data(model, using_nn, averages, standard_deviations, new_data):
         print(model.predict_classes([new_data]))
     else:
         print(model.predict([new_data]))
+
+''' Function that uses SelectKBest to pick the most useful features.
+Probably strictly inferior to more complex approaches like LASSO '''
+def feature_select(features, classifiers, feature_count):
+
+    modified_features = feature_selection.SelectKBest(feature_selection.f_classif, k=feature_count).fit_transform(features, classifiers)
+    return modified_features
