@@ -1,5 +1,4 @@
 import parse_csv as p
-import parse_csv_small as ps
 import nn_functions as nn
 
 testing_binary_classifier = False
@@ -15,7 +14,7 @@ if testing_large_data_set:
     attributes, classifier1, classifier2, classifier3, classifier4, averages, standard_deviations = p.parse_csv(185, 60, filename=filename)
     classifier2 = classifier2.tolist()
 else:
-    attributes, classifier1 = ps.parse_csv_small(filename, 4, 18)
+    attributes, classifier1 = p.parse_csv_small(filename, 4, 18)
     classifier2 = None
     classifier3 = None
     classifier4 = None
@@ -53,15 +52,15 @@ else:
 
 
 ''' LASSO regression '''
-l2_penalty_mse, best_l2, best_model, importance = nn.lasso_regression(attributes, classifier3)
-print("\nANALYSIS \n\nl2 penalty: ")
-print(l2_penalty_mse)
-print("Best 12: ")
-print(best_l2)
-print("Best model: ")
-print(best_model)
-print("Importance: ")
-print(importance)
+# l2_penalty_mse, best_l2, best_model, importance = nn.lasso_regression(attributes, classifier3)
+# print("\nANALYSIS \n\nl2 penalty: ")
+# print(l2_penalty_mse)
+# print("Best 12: ")
+# print(best_l2)
+# print("Best model: ")
+# print(best_model)
+# print("Importance: ")
+# print(importance)
 
 ''' LASSO regression that also gets weights '''
 # best_alpha, coefficients, importance = nn.grid_search_lasso(attributes, classifier2, test_count=1)
@@ -78,7 +77,7 @@ print(importance)
 # nn.lasso_lars(attributes, classifier2, test_count=100, classifier_type=2)
 
 ''' Multi-Layer Perceptron '''
-# nn.mlp(attributes, classifier3, test_count=100, classifier_type=3)
+nn.mlp(attributes, classifier3, test_count=100, classifier_type=3)
 
 ''' Basic Linear Regression '''
 # nn.linear_regression(attributes, classifier2, test_count=1, classifier_type=2)

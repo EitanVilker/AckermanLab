@@ -41,6 +41,23 @@ def parse_csv(dim_x, dim_y, filename=False, data=False, group_number=0):
             
     return scaled_attributes, classifier1, classifier2, classifier3, classifier4, averages, standard_deviations
 
+def parse_csv_small(filename, dim_x, dim_y):
+
+    data = pd.read_csv(filename)
+    attributes = data.drop('Primate ID', axis=1)
+    attributes = attributes.drop('Challenges', axis=1) # Classifier 1
+
+    classifier1 = data['Challenges']
+
+    # Normalize attributes
+    averages = attributes.mean(axis=0)
+    standard_deviations = attributes.std(axis=0)
+    for i in range(dim_x):
+        for j in range(dim_y):
+            attributes.iat[j, i] = (attributes.iat[j, i] - averages[i]) / standard_deviations[i]
+            
+    return attributes, classifier1
+
 ''' Function to separate the attributes into the three individual arms '''
 def separate_into_groups(filename):
 
