@@ -53,15 +53,15 @@ else:
 
 
 ''' LASSO regression '''
-# l2_penalty_mse, best_l2, best_model, importance = nn.lasso_regression(attributes, classifier3)
-# print("\nANALYSIS \n\nl2 penalty: ")
-# print(l2_penalty_mse)
-# print("Best 12: ")
-# print(best_l2)
-# print("Best model: ")
-# print(best_model)
-# print("Importance: ")
-# print(importance)
+l2_penalty_mse, best_l2, best_model, importance = nn.lasso_regression(attributes, classifier3)
+print("\nANALYSIS \n\nl2 penalty: ")
+print(l2_penalty_mse)
+print("Best 12: ")
+print(best_l2)
+print("Best model: ")
+print(best_model)
+print("Importance: ")
+print(importance)
 
 ''' LASSO regression that also gets weights '''
 # best_alpha, coefficients, importance = nn.grid_search_lasso(attributes, classifier2, test_count=1)
@@ -82,3 +82,12 @@ else:
 
 ''' Basic Linear Regression '''
 # nn.linear_regression(attributes, classifier2, test_count=1, classifier_type=2)
+
+
+''' Random Projections '''
+
+# Gaussian
+# nn.gaussian_random_projection(attributes, classifier2, classifier_type=2, attributes_wanted=4, prediction_method=nn.ridge_regression)
+
+# Sparse
+# nn.sparse_random_projection(attributes, classifier2, classifier_type=2, prediction_method=nn.linear_regression)

@@ -9,7 +9,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.wrappers.scikit_learn import KerasRegressor
 from sklearn.model_selection import cross_val_score, KFold
-from sklearn import linear_model
+from sklearn import linear_model, random_projection
 from sklearn.neural_network import MLPClassifier
 from sklearn.decomposition import PCA
 from sklearn.model_selection import StratifiedKFold, RepeatedStratifiedKFold, train_test_split, GridSearchCV
@@ -23,7 +23,7 @@ from mlxtend.feature_selection import SequentialFeatureSelector as SFS
 ''' Function that takes a separated pandas dataframe of attributes and classifiers and 
 runs a logistic regression model. Will not work for continuous classifiers such as 
 Log Peak Viral Load (classifier2) '''
-def logistic_regression(attributes, classifier, test_size=0.2, test_count=100):
+def logistic_regression(attributes, classifier, classifier_type=3, test_size=0.2, test_count=100):
 
     accuracy = 0
     total_predictions = 0
@@ -57,7 +57,7 @@ def logistic_regression(attributes, classifier, test_size=0.2, test_count=100):
 
 ''' Function that takes a separated pandas dataframe of attributes and classifiers and 
 runs a multi-layer perceptron model '''
-def mlp(attributes, classifier, test_size=0.2, test_count=100):
+def mlp(attributes, classifier, test_size=0.2, test_count=100, classifier_type=3):
 
     accuracy = 0
     total_predictions = 0
@@ -92,7 +92,7 @@ def mlp(attributes, classifier, test_size=0.2, test_count=100):
 
 ''' Function that takes a separated pandas dataframe of attributes and classifiers and 
 runs a linear regression model '''
-def linear_regression(attributes, classifier, test_size=0.2, test_count=100):
+def linear_regression(attributes, classifier, test_size=0.2, test_count=100, classifier_type=3):
 
     accuracy = 0
     total_predictions = 0
@@ -137,7 +137,7 @@ def ridge_regression(attributes, classifier, test_size=0.2, test_count=100, clas
         x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
         clf = linear_model.Ridge(alpha=.1).fit(x_train, y_train)
         predictions = clf.predict(x_test)
-        if classifier_type == 1:
+        if classifier_type == 2:
             answers = y_test
         else:
             answers = y_test.tolist()
@@ -325,3 +325,16 @@ def lasso_lars(attributes, classifier, test_size=0.2, test_count=100, classifier
     print(accuracy)
     print("\nLOSS OVER SAMPLES:")
     print(loss_over_samples)
+
+
+def gaussian_random_projection(attributes, classifier, attributes_wanted=10, test_size=0.2, test_count=100, classifier_type=3, prediction_method=linear_regression):
+
+    transformer = random_projection.GaussianRandomProjection(n_components=attributes_wanted)
+    adjusted_attributes = transformer.fit_transform(attributes)
+    prediction_method(adjusted_attributes, classifier, classifier_type=classifier_type, test_count=test_count, test_size=test_size)
+
+def sparse_random_projection(attributes, classifier, attributes_wanted=10, test_size=0.2, test_count=100, classifier_type=3, prediction_method=linear_regression):
+
+    transformer = random_projection.SparseRandomProjection(n_components=attributes_wanted)
+    adjusted_attributes = transformer.fit_transform(attributes)
+    prediction_method(adjusted_attributes, classifier, classifier_type=classifier_type, test_count=test_count, test_size=test_size)
