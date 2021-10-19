@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn import preprocessing
-from sklearn import feature_selection
+from sklearn import preprocessing, feature_selection
 
 
 ''' If filename given, returns attributes and classifiers based on the csv.
@@ -29,17 +28,17 @@ def parse_csv(dim_x, dim_y, filename=False, data=False, group_number=0):
     # Normalize attributes
     averages = attributes.mean(axis=0)
     standard_deviations = attributes.std(axis=0)
-    # for i in range(dim_x):
-    #     for j in range(dim_y):
-    #         attributes.iat[j, i] = (attributes.iat[j, i] - averages[i]) / standard_deviations[i]
+    for i in range(dim_x):
+        for j in range(dim_y):
+            attributes.iat[j, i] = (attributes.iat[j, i] - averages[i]) / standard_deviations[i]
 
-    scaler = preprocessing.StandardScaler().fit(attributes)
+    # scaler = preprocessing.StandardScaler().fit(attributes)
     # print(scaler.mean_)
-    scaled_attributes = scaler.transform(attributes)
-    
+    # scaled_attributes = scaler.transform(attributes)
+
     separate_into_buckets(classifier3, group_number)
             
-    return scaled_attributes, classifier1, classifier2, classifier3, classifier4, averages, standard_deviations
+    return attributes, classifier1, classifier2, classifier3, classifier4, averages, standard_deviations
 
 def parse_csv_small(filename, dim_x, dim_y):
 
@@ -71,6 +70,16 @@ def separate_into_groups(filename):
     group_c = group_c.loc[(group_c["Group"] == "AE239")]
 
     return group_a, group_b, group_c
+
+# def parse_csv_into_features(filename, dim_x, dim_y):
+#     data = pd.read_csv(filename)
+#     attributes = data.drop('Group', axis=1)
+#     attributes = attributes.drop('Time to Infection', axis=1) # Classifier 4
+#     attributes = attributes.drop('Resisted Infection?', axis=1) # Classifier 1
+#     attributes = attributes.drop('Log Peak VL', axis=1) # Classifier 2
+#     attributes = attributes.drop('Log Set Pt VL', axis=1)
+#     attributes = attributes.copy().transpose()
+#     return attributes
 
 ''' Function to create a new classifier that lumps the Time to Infection classifier into 4 "buckets."
 The quartiles are not identified automatically, 

@@ -1,5 +1,6 @@
 import parse_csv as p
 import nn_functions as nn
+import cox_based_model as cox
 
 testing_binary_classifier = False
 testing_large_data_set = True
@@ -77,7 +78,7 @@ else:
 # nn.lasso_lars(attributes, classifier2, test_count=100, classifier_type=2)
 
 ''' Multi-Layer Perceptron '''
-nn.mlp(attributes, classifier3, test_count=100, classifier_type=3)
+# nn.mlp(attributes, classifier3, test_count=100, classifier_type=3)
 
 ''' Basic Linear Regression '''
 # nn.linear_regression(attributes, classifier2, test_count=1, classifier_type=2)
@@ -90,3 +91,28 @@ nn.mlp(attributes, classifier3, test_count=100, classifier_type=3)
 
 # Sparse
 # nn.sparse_random_projection(attributes, classifier2, classifier_type=2, prediction_method=nn.linear_regression)
+
+
+''' Cox based 3-step feature selection '''
+
+# Switch features and subjects for the purpose of clustering
+features = attributes.transpose()
+
+clustering, labels = cox.identify_clusters(features)
+
+print(clustering)
+
+print("params: ")
+print(clustering.get_params())
+print("\nClusters: ")
+print(labels)
+
+best_features = cox.get_best_features_by_pearson(labels, features, classifier3)
+print("\nBest features: ")
+print(best_features)
+
+for i in range(185):
+    if attributes.columns.values[i] not in best_features:
+        attributes.drop(attributes.columns.values[i], axis=1)
+
+nn.lasso_lars(attributes, classifier3)
