@@ -12,12 +12,14 @@ from sklearn.model_selection import cross_val_score, KFold
 from sklearn import linear_model, random_projection
 from sklearn.neural_network import MLPClassifier
 from sklearn.decomposition import PCA
+from sklearn.cluster import AgglomerativeClustering
 from sklearn.model_selection import StratifiedKFold, RepeatedStratifiedKFold, train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
 from mlxtend.feature_selection import SequentialFeatureSelector as SFS
+from scipy.stats import pearsonr
 
 
 ''' Function that takes a separated pandas dataframe of attributes and classifiers and 
@@ -66,11 +68,13 @@ def mlp(attributes, classifier, test_size=0.2, test_count=100, classifier_type=3
     for state in range(test_count):
 
         x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
-        clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+        clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(50, 50), random_state=state)
         clf = clf.fit(x_train, y_train)
         predictions = clf.predict(x_test)
-        answers = y_test
-        # answers = y_test.tolist()
+        if classifier_type == 1:
+            answers = y_test
+        else:
+            answers = y_test.tolist()
 
         loss, successes, prediction_count = e.evaluate(predictions, answers)
         accuracy += successes
@@ -103,8 +107,10 @@ def linear_regression(attributes, classifier, test_size=0.2, test_count=100, cla
         x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
         clf = linear_model.LinearRegression().fit(x_train, y_train)
         predictions = clf.predict(x_test)
-        answers = y_test
-        # answers = y_test.tolist()
+        if classifier_type == 1:
+            answers = y_test
+        else:
+            answers = y_test.tolist()
 
         loss, successes, prediction_count = e.evaluate(predictions, answers)
         accuracy += successes
@@ -255,8 +261,8 @@ runs a LASSO regression model to generate weights for the utility of each variab
 def grid_search_lasso(attributes, classifier, test_size=0.2, test_count=100):
 
     for state in range(test_count):
-        pipeline = Pipeline([('scaler',StandardScaler()), ('model',linear_model.Lasso())])
-        search = GridSearchCV(pipeline, {'model__alpha':np.arange(0.1,10,0.1)}, cv = 5, scoring="neg_mean_squared_error",verbose=3)
+        pipeline = Pipeline([('scaler', StandardScaler()), ('model',linear_model.Lasso())])
+        search = GridSearchCV(pipeline, {'model__alpha':np.arange(0.1,10,0.1)}, cv=10, scoring="neg_mean_squared_error",verbose=3)
         x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
         search.fit(x_train, y_train)
 
@@ -278,7 +284,7 @@ def pca_transform_attributes(attributes, classifier):
 
 ''' Function that takes a separated pandas dataframe of attributes and classifiers and 
 runs a LARS regression model to generate weights for the utility of each variable '''
-def lasso_lars(attributes, classifier, test_size=0.2, test_count=100, classifier_type=3):
+def lasso_lars(attributes, classifier, test_size=0.2, test_count=1000, classifier_type=3):
 
     accuracy = 0
     total_predictions = 0
@@ -299,8 +305,8 @@ def lasso_lars(attributes, classifier, test_size=0.2, test_count=100, classifier
         loss_over_samples += loss
         total_predictions += prediction_count
 
-        print("\n\nCoefficients: ")
-        print(clf.coef_path_)
+        # print("\n\nCoefficients: ")
+        # print(clf.coef_path_)
         # print("feature names: ")
         # print(clf.feature_names_in_)
         path = clf.coef_.tolist()
@@ -308,8 +314,8 @@ def lasso_lars(attributes, classifier, test_size=0.2, test_count=100, classifier
         for i in range(len(path)):
             if abs(path[i]) > 0.001:
                 coefficient_nums.append(i)
-        print("coefficient numbers: ")
-        print(coefficient_nums)
+        # print("coefficient numbers: ")
+        # print(coefficient_nums)
         # print("ANSWERS: \n")
         # print(answers)
         # print("PREDICTIONS: \n")
@@ -326,15 +332,32 @@ def lasso_lars(attributes, classifier, test_size=0.2, test_count=100, classifier
     print("\nLOSS OVER SAMPLES:")
     print(loss_over_samples)
 
-
+''' Function that runs a Gaussian random projection on the features before passing them into an ML function '''
 def gaussian_random_projection(attributes, classifier, attributes_wanted=10, test_size=0.2, test_count=100, classifier_type=3, prediction_method=linear_regression):
 
     transformer = random_projection.GaussianRandomProjection(n_components=attributes_wanted)
     adjusted_attributes = transformer.fit_transform(attributes)
     prediction_method(adjusted_attributes, classifier, classifier_type=classifier_type, test_count=test_count, test_size=test_size)
 
+''' Function that runs a sparse random projection on the features before passing them into an ML function '''
 def sparse_random_projection(attributes, classifier, attributes_wanted=10, test_size=0.2, test_count=100, classifier_type=3, prediction_method=linear_regression):
 
     transformer = random_projection.SparseRandomProjection(n_components=attributes_wanted)
     adjusted_attributes = transformer.fit_transform(attributes)
     prediction_method(adjusted_attributes, classifier, classifier_type=classifier_type, test_count=test_count, test_size=test_size)
+
+''' Function that breaks attributes into clusters based on a certain number of clusters and an affinity, 
+which can be manhattan, l1, l2, etc. '''
+def identify_clusters(attributes, clusters_wanted=9, affinity="euclidean"):
+    clustering = AgglomerativeClustering().fit(attributes, n_clusters=clusters_wanted, affinity=affinity, linkage='ward')
+    return clustering
+
+''' Function to get the Pearson correlation coefficients for each feature to pick the best ones '''
+def get_best_features_by_pearson(attributes, classifier, correlation_threshold=0.7):
+
+    best_features = []
+    for feature in attributes: # TODO set this up to actually work by columns instead of rows
+        correlation_coefficient, p_value = pearsonr(feature, classifier)
+        if abs(correlation_coefficient) > correlation_threshold:
+            best_features.append(feature)
+    return best_features
