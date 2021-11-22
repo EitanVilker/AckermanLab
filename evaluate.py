@@ -1,3 +1,4 @@
+from sklearn.model_selection import permutation_test_score
 
 ''' Function to assess the efficacy of the predictions. 
 Currently returns total values instead of more standard metrics like MSE for ease of interpretation '''
@@ -20,3 +21,7 @@ def evaluate(predictions, answers):
             successes += 1
 
     return loss, successes, prediction_length
+
+def permutation_test(estimator, attributes, classifier):
+    print("\nScore, permutation scores, p-value: ")
+    print(permutation_test_score(estimator, attributes, classifier))
