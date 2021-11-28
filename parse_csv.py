@@ -23,7 +23,20 @@ def parse_csv(dim_x, dim_y, filename=False, data=False, group_number=0):
     classifier1 = data['Resisted Infection?']
     classifier2 = data['Log Peak VL']
     classifier3 = data['Time to Infection']
-    classifier4 = classifier3.copy() # Classifier 3
+    classifier4 = classifier3.copy() # Classifier 3 - Buckets
+    classifier5 = data['Group']
+
+    group_labels = {}
+    i = 0
+    for classifier in classifier5:
+        if classifier not in group_labels:
+            group_labels[classifier] = i
+            i += 1
+        classifier = group_labels[classifier]
+
+
+    print("Column count: " + str(len(attributes.columns.values)))
+
 
     # Normalize attributes
     averages = attributes.mean(axis=0)
@@ -37,8 +50,9 @@ def parse_csv(dim_x, dim_y, filename=False, data=False, group_number=0):
     # scaled_attributes = scaler.transform(attributes)
 
     separate_into_buckets(classifier3, group_number)
-            
-    return attributes, classifier1, classifier2, classifier3, classifier4, averages, standard_deviations
+    convert_groups_to_ints(classifier5)
+
+    return attributes, classifier1, classifier2, classifier3, classifier4, classifier5, averages, standard_deviations
 
 def parse_csv_small(filename, dim_x, dim_y):
 
@@ -53,8 +67,8 @@ def parse_csv_small(filename, dim_x, dim_y):
     standard_deviations = attributes.std(axis=0)
     for i in range(dim_x):
         for j in range(dim_y):
-            attributes.iat[j, i] = (attributes.iat[j, i] - averages[i]) / standard_deviations[i]
-            
+            attributes.iat[i, j] = (attributes.iat[i, j] - averages[i]) / standard_deviations[i]
+
     return attributes, classifier1
 
 ''' Function to separate the attributes into the three individual arms '''
@@ -88,18 +102,38 @@ def separate_into_buckets(classifier3, group_number=0):
 
     # blank, bins = pd.qcut(classifier3, 4, retbins=True) # Identify the quartile ranges
     # print(bins)
+    # Paper uses 1-4, 5-9, 10+
+    # for i in range(group_number * 20, group_number * 20 + len(classifier3)):
+    #     if classifier3[i] <= 2:
+    #         classifier3[i] = 0
+
+    #     elif classifier3[i] <= 4.5:
+    #         classifier3[i] = 1
+
+    #     elif classifier3[i] <= 12:
+    #         classifier3[i] = 2
+
+    #     else:
+    #         classifier3[i] = 3
+
     for i in range(group_number * 20, group_number * 20 + len(classifier3)):
-        if classifier3[i] <= 2:
+        if classifier3[i] <= 4:
             classifier3[i] = 0
 
-        elif classifier3[i] <= 4.5:
+        elif classifier3[i] <= 9:
             classifier3[i] = 1
-
-        elif classifier3[i] <= 12:
+        else:
             classifier3[i] = 2
 
-        else:
-            classifier3[i] = 3
+''' Function to set up classifier5, which allows for predictions of groups '''
+def convert_groups_to_ints(classifier5):
+    for i in range(len(classifier5)):
+        if classifier5[i] == "IM239":
+            classifier5[i] = 0
+        elif classifier5[i] == "IM mosaic":
+            classifier5[i] = 1
+        elif classifier5[i] == "AE239":
+            classifier5[i] = 2
 
 ''' Function that allows a model to make predictions using raw data,
 transforming it using the average and standard deviation in lieu of the StandardScaler '''
