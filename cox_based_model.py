@@ -22,6 +22,7 @@ from sklearn.preprocessing import StandardScaler
 from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
 from mlxtend.feature_selection import SequentialFeatureSelector as SFS
 from scipy.stats import pearsonr
+import random
 
 ''' Function that takes a separated pandas dataframe of attributes and classifiers and 
 runs a linear regression model '''
@@ -61,7 +62,7 @@ def linear_regression(attributes, classifier, test_size=0.2, test_count=100, cla
 ''' Function that takes a separated pandas dataframe of attributes and classifiers and 
 runs a tenfold LASSO regression model '''
 def lasso_regression(attributes, classifier, test_size=0.2, test_count=100, classifier_type=3):
-    
+
     accuracy = 0
     total_predictions = 0
     loss_over_samples = 0
@@ -72,7 +73,7 @@ def lasso_regression(attributes, classifier, test_size=0.2, test_count=100, clas
     best_mse=None
     best_l2=None
     best_model=None
-    
+
     for l2 in l2_val:
         mse=0
         for train_index, test_index in folds.split(attributes):
@@ -80,7 +81,7 @@ def lasso_regression(attributes, classifier, test_size=0.2, test_count=100, clas
             model = lasso.fit(np.array(attributes)[train_index], np.array(classifier)[train_index])
             y_pred = model.predict(np.array(attributes)[test_index])
             mse += np.sum((np.array(classifier)[test_index] - y_pred)**2)
-            
+
         mse/=10
         l2_penalty_mse.append(mse)
         if (best_mse == None or mse < best_mse):
@@ -141,7 +142,7 @@ def get_best_features_by_pearson(labels, features, classifier, correlation_thres
     cluster_matrix = []
     for i in range(cluster_count):
         cluster_matrix.append([])
-    
+
     # Add features to corresponding clusters within the matrix
     for i in range(len(labels)):
         # cluster_matrix[labels[i]].append(features[i])
@@ -161,14 +162,92 @@ def get_best_features_by_pearson(labels, features, classifier, correlation_thres
         if current_best_feature is not None:
             best_features.append(current_best_feature)
 
-    # TODO Figure out pairwise correlations
-            
+    print("Best features before pairwise check")
+    print(best_features)
+
+    # Remove pairwise correlations
+    print("\nRemoving pairwise correlations")
+    while True:
+        go_again = False
+        for feature in best_features:
+            if not go_again:
+                for other_feature in best_features:
+                    if feature != other_feature and not go_again:
+                        correlation_coefficient, p_value = pearsonr(features.loc[feature], features.loc[other_feature])
+                        if correlation_coefficient > correlation_threshold:
+                            best_features.remove(feature)
+                            go_again = True
+        if not go_again:
+            break
+
     return best_features
 
+''' Function to split attributes into ten folds, with each fold containing the indices of two subjects for
+each arm in one part and the remaining ones in the second part '''
+def split_into_folds(group_count=3, subject_count=60, fold_count=10):
+
+    random.seed(None)
+    folds = []
+
+    group_a, group_b, group_c = [], [], []
+    for i in range(subject_count / group_count):
+        group_a.append(i)
+        group_b.append(i)
+        group_c.append(i)
+
+    # For each of the folds
+    for i in range(fold_count):
+
+        # Initialize empty two-part fold
+        fold = [[], []]
+
+        # Add test animals to second part of each fold
+        group_a_copy = group_a.copy()
+        for j in range(2):
+            rand = random.randint(0, len(group_a) - 1)
+            fold[1].append(group_a[rand])
+            group_a_copy.pop(rand)
+
+        group_b_copy = group_b.copy()
+        for j in range(2):
+            rand = random.randint(0, len(group_b) - 1)
+            fold[1].append(group_b[rand])
+            group_b_copy.pop(rand)
+
+        group_c_copy = group_c.copy()
+        for j in range(2):
+            rand = random.randint(0, len(group_c) - 1)
+            fold[1].append(group_c[rand])
+            group_c_copy.pop(rand)
+
+        # Add remaining animals to training part of the fold
+        for j in group_a_copy:
+            fold[0].append[j]
+        for j in group_b_copy:
+            fold[0].append[j]
+        for j in group_c_copy:
+            fold[0].append[j]
+
+        folds.append(fold)
+
+    return folds
+
+
+def survival_analysis(attributes, classifier, fold_count=10):
+
+    # Get clusters
+    features = attributes.transpose()
+    clustering, labels = identify_clusters(features)
+
+    # Get folds
+    folds = split_into_folds()
+    print(folds)
+    for fold in folds:
+        
 
 def recursive_feature_selection(attributes, classifier, estimator=None):
 
-    if estimater is None:
+    if estimator is None:
         estimator = SVR(kernel="linear")
     selector = RFECV(estimator, step=1, cv=5)
     selector = selector.fit(attributes, classifier)

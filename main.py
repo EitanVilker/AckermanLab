@@ -1,6 +1,9 @@
 import parse_csv as p
 import nn_functions as nn
 import cox_based_model as cox
+import evaluate as e
+import graphing as g
+import sys
 
 testing_binary_classifier = False
 testing_large_data_set = True
@@ -12,7 +15,7 @@ else:
 
 # split into input and output variables
 if testing_large_data_set:
-    attributes, classifier1, classifier2, classifier3, classifier4, averages, standard_deviations = p.parse_csv(185, 60, filename=filename)
+    attributes, classifier1, classifier2, classifier3, classifier4, classifier5, averages, standard_deviations = p.parse_csv(190, 60, filename=filename)
     classifier2 = classifier2.tolist()
 else:
     attributes, classifier1 = p.parse_csv_small(filename, 4, 18)
@@ -95,6 +98,20 @@ else:
 
 ''' Cox based 3-step feature selection '''
 
+if len(sys.argv) == 1:
+    classifier = classifier3
+else:
+    classifier = str(sys.argv[1])
+    if classifier == "1":
+        classifier = classifier1
+    elif classifier == "2":
+        classifier = classifier2
+    elif classifier == "3":
+        classifier = classifier3
+    elif classifier == "4":
+        classifier = classifier4
+    elif classifier == "5":
+        classifier = classifier5
 # Switch features and subjects for the purpose of clustering
 features = attributes.transpose()
 
@@ -107,12 +124,37 @@ print(clustering.get_params())
 print("\nClusters: ")
 print(labels)
 
-best_features = cox.get_best_features_by_pearson(labels, features, classifier3)
-print("\nBest features: ")
-print(best_features)
+# best_features = cox.get_best_features_by_pearson(labels, features, classifier)
+# print("\nBest features: ")
+# print(best_features)
 
-for i in range(185):
-    if attributes.columns.values[i] not in best_features:
-        attributes.drop(attributes.columns.values[i], axis=1)
 
-nn.lasso_lars(attributes, classifier3)
+# features_to_remove = []
+# for i in range(185):
+#     if attributes.columns.values[i] not in best_features:
+#         features_to_remove.append(attributes.columns.values[i])
+
+# for feature in features_to_remove:
+#     attributes = attributes.drop(feature, axis=1)
+
+# print(attributes.columns.values)
+
+# estimator = nn.lasso_lars(attributes, classifier, test_count=100)
+# score, permutation_scores, pvalue = e.permutation_test_score(estimator, attributes, classifier)
+# print("Score: " + str(score))
+# print("Permutation scores: ")
+# print(permutation_scores)
+# print("pvalue: " + str(pvalue))
+
+# g.scatter(attributes['rIgG_high.SIVsmE543.gp140'], attributes['G146.151.SIV.gp120.biotinylated.peptide.IgA'], classifier, "rIgG_high.SIVsmE543.gp140", "G146.151.SIV.gp120.biotinylated.peptide.IgA")
+# g.scatter(attributes['MIP1β'], attributes['Bisecting'], classifier, "MIP1β", 'Bisecting')
+# g.scatter(attributes['R2A.4.high.J08.V1V2.mac239.AVI.His'], attributes['R2A.4.high.C1.TR'], classifier, "R2A.4.high.J08.V1V2.mac239.AVI.His", 'R2A.4.high.C1.TR')
+# g.scatter(attributes['rIgG_high.SIVsmE543.gp140'], attributes['R2A.4.high.C1.TR'], classifier, "rIgG_high.SIVsmE543.gp140", 'R2A.4.high.C1.TR')
+# g.scatter(attributes['ADCP gp140'], attributes['ADNP gp140'], classifier, "ADCP gp140", "ADNP gp140")
+# g.scatter(attributes['rIgG_high.SIVsmE543.gp140'], attributes['Bisecting'], classifier, "rIgG_high.SIVsmE543.gp140", "Bisecting")
+# g.scatter(attributes['MIP1β'], attributes['G146.151.SIV.gp120.biotinylated.peptide.IgA'], classifier, "MIP1β", "G146.151.SIV.gp120.biotinylated.peptide.IgA")
+
+# nn.pca_transform_attributes(attributes, classifier)
+
+# print(attributes)
+# nn.lasso_lars(attributes, classifier, classifier_type=5, test_count=1000)

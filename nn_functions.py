@@ -172,7 +172,7 @@ def ridge_regression(attributes, classifier, test_size=0.2, test_count=100, clas
 ''' Function that takes a separated pandas dataframe of attributes and classifiers 
 and runs a linear regression model using the feature_select function in parse_csv.py '''
 def lin_reg_feature_selection(attributes, classifier, feature_count, test_size=0.2, test_count=100, classifier_type=3):
-    
+
     accuracy = 0
     total_predictions = 0
     loss_over_samples = 0
@@ -210,7 +210,7 @@ def lin_reg_feature_selection(attributes, classifier, feature_count, test_size=0
 ''' Function that takes a separated pandas dataframe of attributes and classifiers and 
 runs a tenfold LASSO regression model '''
 def lasso_regression(attributes, classifier, test_size=0.2, test_count=100, classifier_type=3):
-    
+
     accuracy = 0
     total_predictions = 0
     loss_over_samples = 0
@@ -221,7 +221,7 @@ def lasso_regression(attributes, classifier, test_size=0.2, test_count=100, clas
     best_mse=None
     best_l2=None
     best_model=None
-    
+
     for l2 in l2_val:
         mse=0
         for train_index, test_index in folds.split(attributes):
@@ -229,7 +229,7 @@ def lasso_regression(attributes, classifier, test_size=0.2, test_count=100, clas
             model = lasso.fit(np.array(attributes)[train_index], np.array(classifier)[train_index])
             y_pred = model.predict(np.array(attributes)[test_index])
             mse += np.sum((np.array(classifier)[test_index] - y_pred)**2)
-            
+
         mse/=10
         l2_penalty_mse.append(mse)
         if (best_mse == None or mse < best_mse):
@@ -276,15 +276,21 @@ def grid_search_lasso(attributes, classifier, test_size=0.2, test_count=100):
 ''' Function to transform attributes using PCA. 
 Works but oddly makes results slightly worse when plugged into another model '''
 def pca_transform_attributes(attributes, classifier):
-    pca = PCA(0.95)
-    pca.fit(attributes)
-    attributes = pca.transform(attributes)
-    principalComponents = pca.fit_transform(classifier)
+    pca = PCA(2)
+    # pca.fit(attributes)
+    # attributes = pca.transform(attributes)
+    projected = pca.fit_transform(attributes)
+    # principalComponents = pca.fit_transform(classifier)
+    plt.scatter(projected[:, 0], projected[:, 1], edgecolor='none', alpha=0.5, cmap=plt.cm.get_cmap('Spectral', 10))
+    plt.xlabel('component 1')
+    plt.ylabel('component 2')
+    plt.colorbar()
+    plt.show()
     return attributes
 
 ''' Function that takes a separated pandas dataframe of attributes and classifiers and 
 runs a LARS regression model to generate weights for the utility of each variable '''
-def lasso_lars(attributes, classifier, test_size=0.2, test_count=1000, classifier_type=3):
+def lasso_lars(attributes, classifier, test_size=0.2, test_count=100, classifier_type=3):
 
     accuracy = 0
     total_predictions = 0
@@ -332,6 +338,8 @@ def lasso_lars(attributes, classifier, test_size=0.2, test_count=1000, classifie
     print("\nLOSS OVER SAMPLES:")
     print(loss_over_samples)
 
+    return clf
+
 ''' Function that runs a Gaussian random projection on the features before passing them into an ML function '''
 def gaussian_random_projection(attributes, classifier, attributes_wanted=10, test_size=0.2, test_count=100, classifier_type=3, prediction_method=linear_regression):
 
@@ -356,7 +364,7 @@ def identify_clusters(attributes, clusters_wanted=9, affinity="euclidean"):
 def get_best_features_by_pearson(attributes, classifier, correlation_threshold=0.7):
 
     best_features = []
-    for feature in attributes: # TODO set this up to actually work by columns instead of rows
+    for feature in attributes:
         correlation_coefficient, p_value = pearsonr(feature, classifier)
         if abs(correlation_coefficient) > correlation_threshold:
             best_features.append(feature)
