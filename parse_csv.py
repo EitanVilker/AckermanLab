@@ -15,16 +15,16 @@ def parse_csv(dim_x, dim_y, filename=False, data=False, group_number=0):
     elif data == False:
         return None
     attributes = data.drop('Group', axis=1)
-    attributes = attributes.drop('Time to Infection', axis=1) # Classifier 4
-    attributes = attributes.drop('Resisted Infection?', axis=1) # Classifier 1
-    attributes = attributes.drop('Log Peak VL', axis=1) # Classifier 2
+    attributes = attributes.drop('Time to Infection', axis=1) # Classifier 4 - Challenges
+    attributes = attributes.drop('Resisted Infection?', axis=1) # Classifier 1 - Resisted Infection y/n
+    attributes = attributes.drop('Log Peak VL', axis=1) # Classifier 2 - Log Peak Viral Load
     attributes = attributes.drop('Log Set Pt VL', axis=1)
 
     classifier1 = data['Resisted Infection?']
     classifier2 = data['Log Peak VL']
-    classifier3 = data['Time to Infection']
-    classifier4 = classifier3.copy() # Classifier 3 - Buckets
-    classifier5 = data['Group']
+    classifier3 = data['Time to Infection'] # Classifier 3 - Buckets
+    classifier4 = classifier3.copy() # Copy classifier 3 before it is sorted into buckets
+    classifier5 = data['Group'] # Classifier 5 - Arm Labels
 
     group_labels = {}
     i = 0
@@ -50,7 +50,7 @@ def parse_csv(dim_x, dim_y, filename=False, data=False, group_number=0):
     # scaled_attributes = scaler.transform(attributes)
 
     separate_into_buckets(classifier3, group_number)
-    convert_groups_to_ints(classifier5)
+    # convert_groups_to_ints(classifier5)
 
     return attributes, classifier1, classifier2, classifier3, classifier4, classifier5, averages, standard_deviations
 
@@ -119,7 +119,6 @@ def separate_into_buckets(classifier3, group_number=0):
     for i in range(group_number * 20, group_number * 20 + len(classifier3)):
         if classifier3[i] <= 4:
             classifier3[i] = 0
-
         elif classifier3[i] <= 9:
             classifier3[i] = 1
         else:

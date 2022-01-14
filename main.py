@@ -4,6 +4,31 @@ import cox_based_model as cox
 import evaluate as e
 import graphing as g
 import sys
+import random
+
+random.seed(None)
+
+def randomize_labels(classifier, classifier_type=3):
+    print("\n\nClassifier type: " + str(classifier_type))
+    for i in range(len(classifier)):
+        if classifier_type == 1:
+            classifier[i] = random.randint(0, 1)
+        elif classifier_type == 2:
+            classifier[i] = random.uniform(0.0, 7.5)
+        elif classifier_type == 3:
+            classifier[i] = random.randint(0, 2)
+        elif classifier_type == 4:
+            classifier[i] = random.randint(1, 13)
+        elif classifier_type == 5:
+            # classifier[i] = random.randint(0, 2)
+            rand = random.randint(0, 2)
+            print(rand)
+            if rand == 0:
+                classifier[i] = "IM239"
+            elif rand == 1:
+                classifier[i] = "AE239"
+            elif rand == 2:
+                classifier[i] = "IM mosaic"
 
 testing_binary_classifier = False
 testing_large_data_set = True
@@ -97,6 +122,7 @@ else:
 
 
 ''' Cox based 3-step feature selection '''
+permuting = False
 
 if len(sys.argv) == 1:
     classifier = classifier3
@@ -112,17 +138,22 @@ else:
         classifier = classifier4
     elif classifier == "5":
         classifier = classifier5
+if len(sys.argv) > 2:
+    if sys.argv[2] == "1":
+        print("setting permuting to True")
+        permuting = True
+
 # Switch features and subjects for the purpose of clustering
-features = attributes.transpose()
+# features = attributes.transpose()
 
-clustering, labels = cox.identify_clusters(features)
+# clustering, labels = cox.identify_clusters(features)
 
-print(clustering)
+# print(clustering)
 
-print("params: ")
-print(clustering.get_params())
-print("\nClusters: ")
-print(labels)
+# print("params: ")
+# print(clustering.get_params())
+# print("\nClusters: ")
+# print(labels)
 
 # best_features = cox.get_best_features_by_pearson(labels, features, classifier)
 # print("\nBest features: ")
@@ -141,6 +172,7 @@ print(labels)
 
 # estimator = nn.lasso_lars(attributes, classifier, test_count=100)
 # score, permutation_scores, pvalue = e.permutation_test_score(estimator, attributes, classifier)
+
 # print("Score: " + str(score))
 # print("Permutation scores: ")
 # print(permutation_scores)
@@ -158,3 +190,16 @@ print(labels)
 
 # print(attributes)
 # nn.lasso_lars(attributes, classifier, classifier_type=5, test_count=1000)
+
+# cox.survival_analysis(attributes, classifier)
+
+# print("Before permuting: ")
+# print(classifier)
+
+if permuting:
+    randomize_labels(classifier, classifier_type=int(sys.argv[1]))
+
+# print("After permuting")
+# print(classifier)
+
+cox.sequential_feature_selection(attributes, classifier)

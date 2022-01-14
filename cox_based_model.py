@@ -5,21 +5,19 @@ import matplotlib.pyplot as plt
 import evaluate as e
 import parse_csv as p
 
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.wrappers.scikit_learn import KerasRegressor
 from sklearn.model_selection import cross_val_score, KFold
-from sklearn import linear_model, random_projection
-from sklearn.neural_network import MLPClassifier
-from sklearn.decomposition import PCA
+from sklearn import linear_model
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.model_selection import StratifiedKFold, RepeatedStratifiedKFold, train_test_split, GridSearchCV
 from sklearn.feature_selection import RFECV
 from sklearn.svm import SVR
-from sklearn.metrics import accuracy_score
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import StandardScaler
-from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import SGDClassifier
+from sklearn.ensemble import RandomForestClassifier
+
+# from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
 from mlxtend.feature_selection import SequentialFeatureSelector as SFS
 from scipy.stats import pearsonr
 import random
@@ -106,7 +104,7 @@ def lasso_regression(attributes, classifier, test_size=0.2, test_count=100, clas
     print("\nLOSS OVER SAMPLES:")
     print(loss_over_samples)
 
-    return l2_penalty_mse, best_l2, best_model, importance
+    return l2_penalty_mse, best_l2, best_model
 
 ''' Function that takes a separated pandas dataframe of attributes and classifiers and 
 runs a LASSO regression model to generate weights for the utility of each variable '''
@@ -190,50 +188,53 @@ def split_into_folds(group_count=3, subject_count=60, fold_count=10):
     folds = []
 
     group_a, group_b, group_c = [], [], []
-    for i in range(subject_count / group_count):
+    for i in range(subject_count // group_count):
         group_a.append(i)
-        group_b.append(i)
-        group_c.append(i)
+        group_b.append(i + subject_count // group_count)
+        group_c.append(i + 2 * subject_count // group_count)
 
     # For each of the folds
     for i in range(fold_count):
 
         # Initialize empty two-part fold
-        fold = [[], []]
+        fold = []
+        fold.append([])
+        fold.append([])
 
         # Add test animals to second part of each fold
         group_a_copy = group_a.copy()
         for j in range(2):
-            rand = random.randint(0, len(group_a) - 1)
+            rand = random.randint(0, len(group_a_copy) - 1)
             fold[1].append(group_a[rand])
             group_a_copy.pop(rand)
 
         group_b_copy = group_b.copy()
         for j in range(2):
-            rand = random.randint(0, len(group_b) - 1)
+            rand = random.randint(0, len(group_b_copy) - 1)
             fold[1].append(group_b[rand])
             group_b_copy.pop(rand)
 
         group_c_copy = group_c.copy()
         for j in range(2):
-            rand = random.randint(0, len(group_c) - 1)
+            rand = random.randint(0, len(group_c_copy) - 1)
             fold[1].append(group_c[rand])
             group_c_copy.pop(rand)
 
         # Add remaining animals to training part of the fold
         for j in group_a_copy:
-            fold[0].append[j]
+            fold[0].append(j)
         for j in group_b_copy:
-            fold[0].append[j]
+            fold[0].append(j)
         for j in group_c_copy:
-            fold[0].append[j]
+            fold[0].append(j)
 
+        fold[1].sort()
         folds.append(fold)
 
     return folds
 
 
-def survival_analysis(attributes, classifier, fold_count=10):
+def survival_analysis(attributes, classifier, fold_count=10, cluster_count=9):
 
     # Get clusters
     features = attributes.transpose()
@@ -241,9 +242,25 @@ def survival_analysis(attributes, classifier, fold_count=10):
 
     # Get folds
     folds = split_into_folds()
-    print(folds)
     for fold in folds:
+
+        features_copy = features.copy()
+        classifier_copy = classifier.copy()
+        labels_copy = labels.copy()
+
+        # Remove test set subjects from features and classifiers
+        for index in reversed(range(len(fold[1]))):
+            print("index: " + str(fold[1][index]))
+            del classifier_copy[fold[1][index]]
+            # labels_copy = np.delete(labels_copy, fold[1][index])
+            features_copy.drop(fold[1][index], 1)
         
+        print(features_copy)
+        
+        # Rank features in clusters by correlations to time-to-infection for train set
+        print("labels: " + str(len(labels_copy)) + ", features: " + str(len(features_copy.columns)) + ", classifier: " + str(len(classifier_copy)))
+        best_features = get_best_features_by_pearson(labels_copy, features_copy, classifier_copy)
+
 
 def recursive_feature_selection(attributes, classifier, estimator=None):
 
@@ -251,3 +268,48 @@ def recursive_feature_selection(attributes, classifier, estimator=None):
         estimator = SVR(kernel="linear")
     selector = RFECV(estimator, step=1, cv=5)
     selector = selector.fit(attributes, classifier)
+
+    return selector
+
+def sequential_feature_selection(attributes, classifier, estimator=None, test_count=100, test_size=0.5):
+
+    if estimator is None:
+        # estimator = KNeighborsClassifier(n_neighbors=5)
+        # estimator = make_pipeline(StandardScaler(), SGDClassifier(max_iter=1000, tol=1e-3, penalty='l1'))
+        estimator = linear_model.Lasso(alpha=0.1)
+
+    if estimator is not None:
+        sfs = SFS(estimator, k_features=30, forward=True, floating=False, verbose=2,scoring='neg_mean_squared_error', cv=10)
+        sfs.fit(attributes, classifier)
+
+        print(sfs.k_score_)
+        print(sfs.subsets_)
+
+        # accuracy = 0
+        # total_predictions = 0
+        # loss_over_samples = 0
+
+        # for state in range(test_count):
+
+        #     x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
+        #     predictions = sfs.predict(x_test)
+        #     answers = y_test
+        #     # answers = y_test.tolist()
+
+        #     loss, successes, prediction_count = e.evaluate(predictions, answers)
+        #     accuracy += successes
+        #     loss_over_samples += loss
+        #     total_predictions += prediction_count
+
+        #     # print("ANSWERS: \n")
+        #     # print(answers)
+        #     # print("PREDICTIONS: \n")
+        #     # print(predictions)
+
+        # accuracy /= total_predictions
+        # loss_over_samples /= total_predictions
+
+        # print("\nACCURACY: ")
+        # print(accuracy)
+        # print("\nLOSS OVER SAMPLES:")
+        # print(loss_over_samples)
