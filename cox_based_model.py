@@ -2,24 +2,24 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-import evaluate as e
+from evaluate import evaluate
 import parse_csv as p
 
 from sklearn.model_selection import cross_val_score, KFold
 from sklearn import linear_model
-from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import AgglomerativeClustering, SpectralClustering
 from sklearn.model_selection import StratifiedKFold, RepeatedStratifiedKFold, train_test_split, GridSearchCV
 from sklearn.feature_selection import RFECV
 from sklearn.svm import SVR
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import KNeighborsClassifier, kneighbors_graph
 from sklearn.linear_model import SGDClassifier
 from sklearn.ensemble import RandomForestClassifier
 
 # from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
 from mlxtend.feature_selection import SequentialFeatureSelector as SFS
-from scipy.stats import pearsonr
+from scipy.stats import pearsonr, spearmanr, kendalltau
 import random
 
 ''' Function that takes a separated pandas dataframe of attributes and classifiers and 
@@ -38,7 +38,7 @@ def linear_regression(attributes, classifier, test_size=0.2, test_count=100, cla
         answers = y_test
         # answers = y_test.tolist()
 
-        loss, successes, prediction_count = e.evaluate(predictions, answers)
+        loss, successes, prediction_count = evaluate(predictions, answers)
         accuracy += successes
         loss_over_samples += loss
         total_predictions += prediction_count
@@ -89,7 +89,7 @@ def lasso_regression(attributes, classifier, test_size=0.2, test_count=100, clas
 
     predictions = best_model.predict(attributes)
     answers = classifier
-    loss, successes, prediction_count = e.evaluate(predictions, answers)
+    loss, successes, prediction_count = evaluate(predictions, answers)
     accuracy += successes
     loss_over_samples += loss
     total_predictions += prediction_count
@@ -126,7 +126,9 @@ def grid_search_lasso(attributes, classifier, test_size=0.2, test_count=100):
 ''' Function that breaks attributes into clusters based on a certain number of clusters and an affinity, 
 which can be manhattan, l1, l2, etc. '''
 def identify_clusters(attributes, clusters_wanted=9, affinity="euclidean"):
-    clustering = AgglomerativeClustering(n_clusters=clusters_wanted, affinity=affinity, linkage='ward')
+    connectivity = kneighbors_graph(attributes, n_neighbors=10, include_self=False)
+    clustering = AgglomerativeClustering(n_clusters=clusters_wanted, affinity=affinity, linkage='ward', connectivity=connectivity)
+    # clustering = SpectralClustering(n_clusters=clusters_wanted, affinity="nearest_neighbors", assign_labels="kmeans")
     a = clustering.fit(attributes)
     b = clustering.fit_predict(attributes)
     return a, b
@@ -154,6 +156,7 @@ def get_best_features_by_pearson(labels, features, classifier, correlation_thres
             # Get pearson coefficient for this feature
             feature_values = features.loc[cluster_matrix[i][j]]
             correlation_coefficient, p_value = pearsonr(feature_values, classifier)
+            # correlation_coefficient, p_value = spearmanr(feature_values, classifier)
             if abs(correlation_coefficient) > current_best_correlation:
                 current_best_feature = cluster_matrix[i][j]
                 current_best_correlation = correlation_coefficient
@@ -172,6 +175,7 @@ def get_best_features_by_pearson(labels, features, classifier, correlation_thres
                 for other_feature in best_features:
                     if feature != other_feature and not go_again:
                         correlation_coefficient, p_value = pearsonr(features.loc[feature], features.loc[other_feature])
+                        # correlation_coefficient, p_value = spearmanr(features.loc[feature], features.loc[other_feature])
                         if correlation_coefficient > correlation_threshold:
                             best_features.remove(feature)
                             go_again = True
@@ -271,45 +275,40 @@ def recursive_feature_selection(attributes, classifier, estimator=None):
 
     return selector
 
+def create_scoring():
+
+    pass
+
 def sequential_feature_selection(attributes, classifier, estimator=None, test_count=100, test_size=0.5):
 
     if estimator is None:
-        # estimator = KNeighborsClassifier(n_neighbors=5)
-        # estimator = make_pipeline(StandardScaler(), SGDClassifier(max_iter=1000, tol=1e-3, penalty='l1'))
-        estimator = linear_model.Lasso(alpha=0.1)
+        estimator = KNeighborsClassifier(n_neighbors=5)
+        # estimator = make_pipeline(StandardScaler(), SGDClassifier(max_iter=1000, tol=1e-3, penalty='elasticnet'))
+        # estimator = linear_model.Ridge(alpha=0.1, solver="saga")
 
     if estimator is not None:
-        sfs = SFS(estimator, k_features=30, forward=True, floating=False, verbose=2,scoring='neg_mean_squared_error', cv=10)
+        sfs = SFS(estimator, k_features=30, forward=True, floating=False, verbose=2,scoring='balanced_accuracy', cv=10)
         sfs.fit(attributes, classifier)
 
         print(sfs.k_score_)
         print(sfs.subsets_)
+        return sfs.transform(attributes)
 
-        # accuracy = 0
-        # total_predictions = 0
-        # loss_over_samples = 0
+''' Function to add randomized subjects within the bounds of the min and max feature values to compensate for insufficient data '''
+def add_artificial_subjects(attributes, classifier, additional_subject_count=300, feature_count=190, original_subject_count=60):
 
-        # for state in range(test_count):
-
-        #     x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
-        #     predictions = sfs.predict(x_test)
-        #     answers = y_test
-        #     # answers = y_test.tolist()
-
-        #     loss, successes, prediction_count = e.evaluate(predictions, answers)
-        #     accuracy += successes
-        #     loss_over_samples += loss
-        #     total_predictions += prediction_count
-
-        #     # print("ANSWERS: \n")
-        #     # print(answers)
-        #     # print("PREDICTIONS: \n")
-        #     # print(predictions)
-
-        # accuracy /= total_predictions
-        # loss_over_samples /= total_predictions
-
-        # print("\nACCURACY: ")
-        # print(accuracy)
-        # print("\nLOSS OVER SAMPLES:")
-        # print(loss_over_samples)
+    to_add = []
+    for i in range(additional_subject_count):
+        print(i)
+        new_subject = []
+        rand = random.randint(0, original_subject_count - 1)
+        for j in range(feature_count):
+            feature_val = attributes.iloc[rand, j]
+            # Assumption here is that attributes have been standardized so new features should be within 3/10 of a standard deviation
+            new_subject.append(random.uniform(feature_val - 0.3, feature_val + 0.3))
+        to_add.append(new_subject)
+        attributes.loc[len(attributes)] = new_subject
+        classifier.loc[len(classifier)] = classifier[rand]
+    print("\n\n\n________________________________________________________________________")
+    print(attributes)
+    return attributes

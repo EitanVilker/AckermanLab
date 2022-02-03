@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from array import array
 from sklearn import preprocessing, feature_selection
 
 
@@ -52,7 +53,49 @@ def parse_csv(dim_x, dim_y, filename=False, data=False, group_number=0):
     separate_into_buckets(classifier3, group_number)
     # convert_groups_to_ints(classifier5)
 
-    return attributes, classifier1, classifier2, classifier3, classifier4, classifier5, averages, standard_deviations
+    # Assemble classifier 6 - tuples for survival analysis
+    classifier6 = np.zeros(60, dtype=('bool, int32'))
+    for i in range(dim_y):
+        # np.append(classifier6, [classifier1[i], classifier4[i]])
+        bool_convert = classifier1[i]
+        if bool_convert.item(0) == 0:
+            bool_convert = False
+        elif bool_convert.item(0) == 1:
+            bool_convert = True
+        classifier6[i] = (bool_convert, classifier4[i])
+        # np.append(classifier6, (bool_convert, classifier4[i]))
+        # classifier6.append(np.array([classifier1[i], classifier4[i]], dtype=object))
+
+    # print(classifier6)
+
+    mean_animals = pd.DataFrame()
+    # For each challenge count
+    for i in range(1, 14):
+        subject_count = 0
+
+        mean_attributes = []
+        # Create list of zeroed features
+        for j in range(dim_x):
+            mean_attributes.append(0)
+
+        # For each subject
+        for j in range(dim_y):
+            subject_count += 1
+            # If the subject has the right challenge count
+            if int(classifier4[j]) == i:
+                # For each feature
+                for k in range(dim_x):
+                    mean_attributes[k] += attributes.iat[j, k] # Double check order j, k
+        
+        # Divide every feature value by subject count to get average
+        if subject_count != 0:
+            for j in range(dim_x):
+                mean_attributes[j] /= subject_count
+        mean_animals[str(i)] = mean_attributes
+    
+    # print(mean_animals)
+
+    return attributes, classifier1, classifier2, classifier3, classifier4, classifier5, classifier6, averages, standard_deviations, mean_animals
 
 def parse_csv_small(filename, dim_x, dim_y):
 
