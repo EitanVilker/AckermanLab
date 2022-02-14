@@ -294,10 +294,34 @@ def sequential_feature_selection(attributes, classifier, estimator=None, test_co
         print(sfs.subsets_)
         return sfs.transform(attributes)
 
-''' Function to add randomized subjects within the bounds of the min and max feature values to compensate for insufficient data '''
-def add_artificial_subjects(attributes, classifier, additional_subject_count=300, feature_count=190, original_subject_count=60):
+''' Function to separate holdouts for validation testing '''
+def get_holdouts(attributes, classifier, subject_count=60):
+    holdout_attributes = []
+    holdout_classifiers = []
+    to_remove = []
+    for i in range(subject_count // 10):
+        # Choose a random real subject index that hasn't been chosen yet
+        rand = random.randint(0, subject_count - i - 1)
+        while rand in to_remove:
+            rand = random.randint(0, subject_count - i - 1)
+        to_remove.append(rand)
+        
+        # Move the subject to holdouts
+        holdout_attributes.append(attributes.loc[rand])
+        holdout_classifiers.append(classifier.loc[rand])
+        classifier.pop(rand)
 
-    to_add = []
+    print(to_remove)
+    attributes = attributes.drop(to_remove)
+    holdout_attributes = np.asarray(holdout_attributes)
+    holdout_classifiers = np.asarray(holdout_classifiers)
+    subject_count -= subject_count // 10
+
+    return attributes, classifier, holdout_attributes, holdout_classifiers, subject_count
+
+''' Function to add randomized subjects within the bounds of the min and max feature values to compensate for insufficient data '''
+def add_artificial_subjects(attributes, classifier, additional_subject_count=60, feature_count=190, original_subject_count=60):
+
     for i in range(additional_subject_count):
         print(i)
         new_subject = []
@@ -306,9 +330,9 @@ def add_artificial_subjects(attributes, classifier, additional_subject_count=300
             feature_val = attributes.iloc[rand, j]
             # Assumption here is that attributes have been standardized so new features should be within 3/10 of a standard deviation
             new_subject.append(random.uniform(feature_val - 0.3, feature_val + 0.3))
-        to_add.append(new_subject)
         attributes.loc[len(attributes)] = new_subject
-        classifier.loc[len(classifier)] = classifier[rand]
+        classifier.loc[len(classifier)] = classifier.iloc[rand]
+        # classifier = pd.concat([classifier, pd.Series(classifier[rand])])
     print("\n\n\n________________________________________________________________________")
     print(attributes)
     return attributes

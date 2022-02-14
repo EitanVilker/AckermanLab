@@ -79,25 +79,25 @@ def baseline_model():
 	model.compile(loss='mean_squared_error', optimizer='adam')
 	return model
 
-clf = LogisticRegression(solver='lbfgs')
-x_train = attributes
-y_train = classifier1
-x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_size=0.2, random_state=88)
+# clf = LogisticRegression(solver='lbfgs')
+# x_train = attributes
+# y_train = classifier1
+# x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_size=0.2, random_state=88)
 
-stratkfold = RepeatedStratifiedKFold(n_splits=5, n_repeats=20, random_state=88).split(x_train, y_train)
-cv=list(stratkfold)
+# stratkfold = RepeatedStratifiedKFold(n_splits=5, n_repeats=20, random_state=88).split(x_train, y_train)
+# cv=list(stratkfold)
 
-sfs = SFS(clf, 
-        k_features='best', 
-        forward=True, 
-        floating=True, 
-        verbose=0,
-        scoring='accuracy',
-        cv=cv,
-        n_jobs=-1)
-sfs.fit(x_train, y_train)
+# sfs = SFS(clf, 
+#         k_features='best', 
+#         forward=True, 
+#         floating=True, 
+#         verbose=0,
+#         scoring='accuracy',
+#         cv=cv,
+#         n_jobs=-1)
+# sfs.fit(x_train, y_train)
 
-plot_subsets(sfs, x_train, y_train, x_test, y_test, clf=clf)
+# plot_subsets(sfs, x_train, y_train, x_test, y_test, clf=clf)
 
 
 # # evaluate model

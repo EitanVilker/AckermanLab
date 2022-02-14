@@ -114,6 +114,43 @@ def parse_csv_small(filename, dim_x, dim_y):
 
     return attributes, classifier1
 
+def is_float(element):
+    try:
+        float(element)
+        return True
+    except ValueError:
+        return False
+
+''' Function to help with formatting output so that they can easily be collected as data '''
+def get_usable_data(file1, file2, file3, file4, file5):
+    data = open(file1)
+    out_file1 = open(file2, "w")
+    out_file2 = open(file3, "w")
+    out_file3 = open(file4, "w")
+    out_file4 = open(file5, "w")
+    lines = data.readlines()
+    for line in lines:
+        count = 0
+        line = line.split()
+
+        for item in line:
+            if is_float(item):
+                if count == 0:
+                    out_file1.write(item + "\n")
+                elif count == 1:
+                    out_file2.write(item + "\n")
+                elif count == 2:
+                    out_file3.write(item + "\n")
+                elif count == 3:
+                    out_file4.write(item + "\n")
+                count += 1
+    data.close()
+    out_file1.close()
+    out_file2.close()
+    out_file3.close()
+    out_file4.close()
+
+
 ''' Function to separate the attributes into the three individual arms '''
 def separate_into_groups(filename):
 
@@ -195,3 +232,7 @@ def feature_select(features, classifiers, feature_count):
 
     modified_features = feature_selection.SelectKBest(feature_selection.f_classif, k=feature_count).fit_transform(features, classifiers)
     return modified_features
+
+
+if __name__ == "__main__":
+    get_usable_data("output0.csv", "output1.csv", "output2.csv", "output3.csv", "output4.csv")

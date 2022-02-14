@@ -49,6 +49,8 @@ def randomize_labels(classifier, classifier_type=3):
 
 testing_binary_classifier = False
 testing_large_data_set = True
+feature_count = 190
+subject_count = 60
 
 if testing_large_data_set:
     filename = '41591_2018_161_MOESM3_ESM.csv'
@@ -57,7 +59,7 @@ else:
 
 ''' split into input and output variables '''
 if testing_large_data_set:
-    attributes, classifier1, classifier2, classifier3, classifier4, classifier5, classifier6, averages, standard_deviations, mean_animals = p.parse_csv(190, 60, filename=filename)
+    attributes, classifier1, classifier2, classifier3, classifier4, classifier5, classifier6, averages, standard_deviations, mean_animals = p.parse_csv(feature_count, subject_count, filename=filename)
     classifier2 = classifier2.tolist()
 else:
     attributes, classifier1 = p.parse_csv_small(filename, 4, 18)
@@ -66,6 +68,7 @@ else:
     classifier4 = None
 
 permuting = False
+removing_outliers = True
 
 if len(sys.argv) == 1:
     classifier = classifier3
@@ -94,8 +97,22 @@ else:
 if permuting:
     randomize_labels(classifier, classifier_type=int(sys.argv[1]))
 
+if removing_outliers:
+    CI_val = 1.645
+    for i in range(feature_count):
+        for j in range(subject_count):
+            val = attributes.iat[j, i]
+            if val > CI_val:
+                attributes.iat[j, i] = CI_val
+            elif val < -CI_val:
+                attributes.iat[j, i] = -CI_val
+
+holdout_attributes = np.array([])
+holdout_classifiers = np.array([])
 if adding_artificial_subjects > 0:
-    attributes = cox.add_artificial_subjects(attributes, classifier, additional_subject_count=adding_artificial_subjects)
+
+    attributes, classifier, holdout_attributes, holdout_classifiers, subject_count = cox.get_holdouts(attributes, classifier)
+    attributes = cox.add_artificial_subjects(attributes, classifier, original_subject_count=subject_count, additional_subject_count=adding_artificial_subjects)
 
 ''' Regression by group. For some reason works better/only if the groups are run individually '''
 # nn.ridge_regression(attributes, classifier3, test_count=1)
@@ -265,4 +282,4 @@ if adding_artificial_subjects > 0:
 # plt.show()
 
 ''' RNN '''
-RNN.RNN_model(attributes, classifier, input_dim=190, subject_count=60+adding_artificial_subjects)
+RNN.RNN_model(attributes, classifier, holdout_attributes=holdout_attributes, holdout_classifiers=holdout_classifiers, input_dim=190, subject_count=60+adding_artificial_subjects, artificial_count=adding_artificial_subjects)
