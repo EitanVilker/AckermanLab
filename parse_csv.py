@@ -123,12 +123,12 @@ def is_float(element):
         return False
 
 ''' Function to help with formatting output so that they can easily be collected as data '''
-def get_usable_data(file1, file2, file3, file4, file5):
-    data = open(file1)
-    out_file1 = open(file2, "w")
-    out_file2 = open(file3, "w")
-    out_file3 = open(file4, "w")
-    out_file4 = open(file5, "w")
+def get_usable_data(folder, file1, file2, file3, file4, file5):
+    data = open(folder + "/" + file1)
+    out_file1 = open(folder + "/" + file2, "w")
+    out_file2 = open(folder + "/" + file3, "w")
+    out_file3 = open(folder + "/" + file4, "w")
+    out_file4 = open(folder + "/" + file5, "w")
     lines = data.readlines()
     for line in lines:
         count = 0
@@ -235,4 +235,4 @@ def feature_select(features, classifiers, feature_count):
 
 
 if __name__ == "__main__":
-    get_usable_data("output0.csv", "output1.csv", "output2.csv", "output3.csv", "output4.csv")
+    get_usable_data("output", "output0.csv", "output1.csv", "output2.csv", "output3.csv", "output4.csv")
