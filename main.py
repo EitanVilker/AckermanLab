@@ -8,11 +8,9 @@ import tensorflow.keras as keras
 
 # Local Python scripts
 import parse_csv as p
-import nn_functions as nn
+import ml_functions as ml
 import RNN
 import evaluate as e
-import graphing as g
-import cox_based_model as cox
 
 # ML functions
 from sklearn import linear_model, random_projection
@@ -111,18 +109,18 @@ holdout_attributes = np.array([])
 holdout_classifiers = np.array([])
 if adding_artificial_subjects > 0:
 
-    attributes, classifier, holdout_attributes, holdout_classifiers, subject_count = cox.get_holdouts(attributes, classifier)
-    attributes = cox.add_artificial_subjects(attributes, classifier, original_subject_count=subject_count, additional_subject_count=adding_artificial_subjects)
+    attributes, classifier, holdout_attributes, holdout_classifiers, subject_count = ml.get_holdouts(attributes, classifier)
+    attributes = ml.add_artificial_subjects(attributes, classifier, original_subject_count=subject_count, additional_subject_count=adding_artificial_subjects)
 
 ''' Regression by group. For some reason works better/only if the groups are run individually '''
-# nn.ridge_regression(attributes, classifier3, test_count=1)
+# ml.ridge_regression(attributes, classifier3, test_count=1)
 # group_a, group_b, group_c = p.separate_into_groups(filename)
 # attributes, classifier1, classifier2, classifier3, classifier4, averages, standard_deviations = p.parse_csv(185, 20, data=group_a, group_number=0)
-# nn.ridge_regression(attributes, classifier2, test_count=1000, classifier_type=3)
+# ml.ridge_regression(attributes, classifier2, test_count=1000, classifier_type=3)
 # attributes, classifier1, classifier2, classifier3, classifier4, averages, standard_deviations = p.parse_csv(185, 20, data=group_b, group_number=1)
-# nn.ridge_regression(attributes, classifier2, test_count=1000, classifier_type=3)
+# ml.ridge_regression(attributes, classifier2, test_count=1000, classifier_type=3)
 # attributes, classifier1, classifier2, classifier3, classifier4, averages, standard_deviations = p.parse_csv(185, 20, data=group_c, group_number=2)
-# nn.ridge_regression(attributes, classifier2, test_count=1000, classifier_type=3)
+# ml.ridge_regression(attributes, classifier2, test_count=1000, classifier_type=3)
 
 ''' Perform feature selection '''
 # current_best_feature_count = 0
@@ -131,7 +129,7 @@ if adding_artificial_subjects > 0:
 
 # for i in range(100):
 
-#     loss, features = nn.lin_reg_feature_selection(attributes, classifier2, i + 1, test_count=100, classifier_type=2)
+#     loss, features = ml.lin_reg_feature_selection(attributes, classifier2, i + 1, test_count=100, classifier_type=2)
 #     if loss < current_best_loss:
 #         current_best_loss = loss
 #         current_best_feature_count = i + 1
@@ -143,7 +141,7 @@ if adding_artificial_subjects > 0:
 
 
 ''' LASSO regression '''
-# l2_penalty_mse, best_l2, best_model, importance = nn.lasso_regression(attributes, classifier3)
+# l2_penalty_mse, best_l2, best_model, importance = ml.lasso_regression(attributes, classifier3)
 # print("\nANALYSIS \n\nl2 penalty: ")
 # print(l2_penalty_mse)
 # print("Best 12: ")
@@ -154,7 +152,7 @@ if adding_artificial_subjects > 0:
 # print(importance)
 
 ''' LASSO regression that also gets weights '''
-# best_alpha, coefficients, importance = nn.grid_search_lasso(attributes, classifier2, test_count=1)
+# best_alpha, coefficients, importance = ml.grid_search_lasso(attributes, classifier2, test_count=1)
 # print("\nAlpha: ")
 # print(best_alpha)
 # print("Coefficients: ")
@@ -165,22 +163,22 @@ if adding_artificial_subjects > 0:
 # print(surviving_features)
 
 ''' LARS '''
-# nn.lasso_lars(attributes, classifier2, test_count=100, classifier_type=2)
+# ml.lasso_lars(attributes, classifier2, test_count=100, classifier_type=2)
 
 ''' Multi-Layer Perceptron '''
-# nn.mlp(attributes, classifier3, test_count=100, classifier_type=3)
+# ml.mlp(attributes, classifier3, test_count=100, classifier_type=3)
 
 ''' Basic Linear Regression '''
-# nn.linear_regression(attributes, classifier, test_count=1, classifier_type=4)
+# ml.linear_regression(attributes, classifier, test_count=1, classifier_type=4)
 
 
 ''' Random Projections '''
 
 # Gaussian
-# nn.gaussian_random_projection(attributes, classifier2, classifier_type=2, attributes_wanted=4, prediction_method=nn.ridge_regression)
+# ml.gaussian_random_projection(attributes, classifier2, classifier_type=2, attributes_wanted=4, prediction_method=ml.ridge_regression)
 
 # Sparse
-# nn.sparse_random_projection(attributes, classifier2, classifier_type=2, prediction_method=nn.linear_regression)
+# ml.sparse_random_projection(attributes, classifier2, classifier_type=2, prediction_method=ml.linear_regression)
 
 
 ''''' Cox based 3-step feature selection '''''
@@ -188,7 +186,7 @@ if adding_artificial_subjects > 0:
 ''' Switch features and subjects for the purpose of clustering '''
 # features = attributes.transpose()
 # cluster_count=9
-# clustering, labels = cox.identify_clusters(features, clusters_wanted=cluster_count)
+# clustering, labels = ml.identify_clusters(features, clusters_wanted=cluster_count)
 
 # print(clustering)
 
@@ -203,7 +201,7 @@ if adding_artificial_subjects > 0:
 # # plt.show()
 
 # ''' Remove bad features '''
-# best_features = cox.get_best_features_by_pearson(labels, features, classifier, cluster_count=cluster_count)
+# best_features = ml.get_best_features_by_pearson(labels, features, classifier, cluster_count=cluster_count)
 # print("\nBest features: ")
 # print(best_features)
 
@@ -216,7 +214,7 @@ if adding_artificial_subjects > 0:
 #     attributes = attributes.drop(feature, axis=1)
 
 # ''' Run model and permute '''
-# # estimator = nn.lasso_lars(attributes, classifier, test_count=100)
+# # estimator = ml.lasso_lars(attributes, classifier, test_count=100)
 # estimator = linear_model.Ridge(alpha=0.1, solver='cholesky')
 
 # score, permutation_scores, pvalue = e.permutation_test_score(estimator, attributes, classifier)
@@ -231,21 +229,12 @@ if adding_artificial_subjects > 0:
 # print(estimator.predict(attributes))
 # print(estimator.score(attributes, classifier))
 
-''' Create scatter plots of feature comparisons '''
-# g.scatter(attributes['rIgG_high.SIVsmE543.gp140'], attributes['G146.151.SIV.gp120.biotinylated.peptide.IgA'], classifier, "rIgG_high.SIVsmE543.gp140", "G146.151.SIV.gp120.biotinylated.peptide.IgA")
-# g.scatter(attributes['MIP1β'], attributes['Bisecting'], classifier, "MIP1β", 'Bisecting')
-# g.scatter(attributes['R2A.4.high.J08.V1V2.mac239.AVI.His'], attributes['R2A.4.high.C1.TR'], classifier, "R2A.4.high.J08.V1V2.mac239.AVI.His", 'R2A.4.high.C1.TR')
-# g.scatter(attributes['rIgG_high.SIVsmE543.gp140'], attributes['R2A.4.high.C1.TR'], classifier, "rIgG_high.SIVsmE543.gp140", 'R2A.4.high.C1.TR')
-# g.scatter(attributes['ADCP gp140'], attributes['ADNP gp140'], classifier, "ADCP gp140", "ADNP gp140")
-# g.scatter(attributes['rIgG_high.SIVsmE543.gp140'], attributes['Bisecting'], classifier, "rIgG_high.SIVsmE543.gp140", "Bisecting")
-# g.scatter(attributes['MIP1β'], attributes['G146.151.SIV.gp120.biotinylated.peptide.IgA'], classifier, "MIP1β", "G146.151.SIV.gp120.biotinylated.peptide.IgA")
-
-# nn.pca_transform_attributes(attributes, classifier)
+# ml.pca_transform_attributes(attributes, classifier)
 
 # print(attributes)
-# nn.lasso_lars(attributes, classifier, classifier_type=5, test_count=1000)
+# ml.lasso_lars(attributes, classifier, classifier_type=5, test_count=1000)
 
-# cox.survival_analysis(attributes, classifier)
+# ml.survival_analysis(attributes, classifier)
 
 # print("Before permuting: ")
 # print(classifier)
@@ -253,8 +242,8 @@ if adding_artificial_subjects > 0:
 # print("After permuting")
 # print(classifier)
 
-# reduced_features = cox.sequential_feature_selection(attributes, classifier)
-# # nn.ridge_regression(reduced_features, classifier, classifier_type=3)
+# reduced_features = ml.sequential_feature_selection(attributes, classifier)
+# # ml.ridge_regression(reduced_features, classifier, classifier_type=3)
 # knn = KNeighborsClassifier(n_neighbors=5)
 # knn.fit(reduced_features, classifier)
 # for i in range(60 + adding_artificial_subjects):
@@ -281,5 +270,5 @@ if adding_artificial_subjects > 0:
 # plt.ylim(0, 1)
 # plt.show()
 
-''' RNN '''
+''' Neural Network '''
 RNN.RNN_model(attributes, classifier, holdout_attributes=holdout_attributes, holdout_classifiers=holdout_classifiers, input_dim=190, subject_count=60+adding_artificial_subjects, artificial_count=adding_artificial_subjects)

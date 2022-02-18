@@ -3,7 +3,6 @@ import numpy as np
 from array import array
 from sklearn import preprocessing, feature_selection
 
-
 ''' If filename given, returns attributes and classifiers based on the csv.
 If not, uses the data object being passed in. 
 This is to make it easier if only parts of the dataset are being tested, 
@@ -97,6 +96,7 @@ def parse_csv(dim_x, dim_y, filename=False, data=False, group_number=0):
 
     return attributes, classifier1, classifier2, classifier3, classifier4, classifier5, classifier6, averages, standard_deviations, mean_animals
 
+''' Parses the smaller csv, MOESM4. Rarely used so may be out of date '''
 def parse_csv_small(filename, dim_x, dim_y):
 
     data = pd.read_csv(filename)
@@ -114,6 +114,7 @@ def parse_csv_small(filename, dim_x, dim_y):
 
     return attributes, classifier1
 
+''' Check if string can be converted to float '''
 def is_float(element):
     try:
         float(element)
@@ -149,7 +150,6 @@ def get_usable_data(file1, file2, file3, file4, file5):
     out_file2.close()
     out_file3.close()
     out_file4.close()
-
 
 ''' Function to separate the attributes into the three individual arms '''
 def separate_into_groups(filename):

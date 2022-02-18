@@ -18,8 +18,8 @@ def RNN_model(attributes, classifier, holdout_attributes, holdout_classifiers, i
     # model.add(layers.SimpleRNN(64))
 
     model.add(layers.Dense(64, activation="softsign"))
-    model.add(layers.LSTM(32))
-    model.add(layers.Dense(3, activation='sigmoid'))
+    # model.add(layers.LSTM(32))
+    model.add(layers.Dense(14, activation='sigmoid'))
 
     model.summary()
 

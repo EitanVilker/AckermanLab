@@ -1,3 +1,5 @@
+''' Useful but no longer the main neural network. Will revisit and take prediction and analysis details '''
+
 import numpy as np
 from keras.models import Sequential
 from keras.layers import Dense

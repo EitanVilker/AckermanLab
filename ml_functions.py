@@ -1,26 +1,26 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import random
 
 from evaluate import evaluate
 import parse_csv as p
 
 from sklearn.model_selection import cross_val_score, KFold
-from sklearn import linear_model
+from sklearn import linear_model, random_projection
 from sklearn.cluster import AgglomerativeClustering, SpectralClustering
+from sklearn.neural_network import MLPClassifier
+from sklearn.decomposition import PCA
 from sklearn.model_selection import StratifiedKFold, RepeatedStratifiedKFold, train_test_split, GridSearchCV
-from sklearn.feature_selection import RFECV
-from sklearn.svm import SVR
+from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import RFECV
 from sklearn.neighbors import KNeighborsClassifier, kneighbors_graph
-from sklearn.linear_model import SGDClassifier
-from sklearn.ensemble import RandomForestClassifier
-
-# from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
+from sklearn.svm import SVR, SVC
+from sklearn.preprocessing import StandardScaler
 from mlxtend.feature_selection import SequentialFeatureSelector as SFS
 from scipy.stats import pearsonr, spearmanr, kendalltau
-import random
+
 
 ''' Function that takes a separated pandas dataframe of attributes and classifiers and 
 runs a linear regression model '''
@@ -56,6 +56,261 @@ def linear_regression(attributes, classifier, test_size=0.2, test_count=100, cla
     print("\nLOSS OVER SAMPLES:")
     print(loss_over_samples)
 
+''' Function that takes a separated pandas dataframe of attributes and classifiers and 
+runs a logistic regression model. Will not work for continuous classifiers such as 
+Log Peak Viral Load (classifier2) '''
+def logistic_regression(attributes, classifier, classifier_type=3, test_size=0.2, test_count=100):
+
+    accuracy = 0
+    total_predictions = 0
+    loss_over_samples = 0
+
+    for state in range(test_count):
+
+        x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
+        clf = linear_model.LogisticRegression(random_state=0).fit(x_train, y_train)
+        predictions = clf.predict(x_test)
+        answers = y_test
+        # answers = y_test.tolist()
+
+        loss, successes, prediction_count = evaluate.evaluate(predictions, answers)
+        accuracy += successes
+        loss_over_samples += loss
+        total_predictions += prediction_count
+
+        # print("ANSWERS: \n")
+        # print(answers)
+        # print("PREDICTIONS: \n")
+        # print(predictions)
+
+    accuracy /= total_predictions
+    loss_over_samples /= total_predictions
+
+    print("\nACCURACY: ")
+    print(accuracy)
+    print("\nLOSS OVER SAMPLES:")
+    print(loss_over_samples)
+
+''' Function to run a basic SVM model '''
+def SVM(attributes, classifier, test_size=0.2):
+    X_train, X_test, y_train, y_test = train_test_split(attributes, classifier, test_size = 0.20)
+
+    svclassifier = SVC(kernel='sigmoid')
+    svclassifier.fit(X_train, y_train)
+
+    y_pred = svclassifier.predict(X_test)
+    print(confusion_matrix(y_test,y_pred))
+    print(classification_report(y_test,y_pred))
+
+''' Function that takes a separated pandas dataframe of attributes and classifiers and 
+runs a multi-layer perceptron model '''
+def mlp(attributes, classifier, test_size=0.2, test_count=100, classifier_type=3):
+
+    accuracy = 0
+    total_predictions = 0
+    loss_over_samples = 0
+
+    for state in range(test_count):
+
+        x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
+        clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(50, 50), random_state=state)
+        clf = clf.fit(x_train, y_train)
+        predictions = clf.predict(x_test)
+        if classifier_type == 1:
+            answers = y_test
+        else:
+            answers = y_test.tolist()
+
+        loss, successes, prediction_count = evaluate.evaluate(predictions, answers)
+        accuracy += successes
+        loss_over_samples += loss
+        total_predictions += prediction_count
+
+        # print("ANSWERS: \n")
+        # print(answers)
+        # print("PREDICTIONS: \n")
+        # print(predictions)
+
+    accuracy /= total_predictions
+    loss_over_samples /= total_predictions
+
+    print("\nACCURACY: ")
+    print(accuracy)
+    print("\nLOSS OVER SAMPLES:")
+    print(loss_over_samples)
+
+''' Function that takes a separated pandas dataframe of attributes and classifiers and 
+runs a ridge linear regression model '''
+def ridge_regression(attributes, classifier, test_size=0.2, test_count=100, classifier_type=3):
+
+    accuracy = 0
+    total_predictions = 0
+    loss_over_samples = 0
+
+    for state in range(test_count):
+
+        x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
+        clf = linear_model.Ridge(alpha=.1).fit(x_train, y_train)
+        predictions = clf.predict(x_test)
+        if classifier_type == 2:
+            answers = y_test
+        else:
+            answers = y_test.tolist()
+
+        loss, successes, prediction_count = evaluate.evaluate(predictions, answers)
+        accuracy += successes
+        loss_over_samples += loss
+        total_predictions += prediction_count
+
+        # print("ANSWERS: \n")
+        # print(answers)
+        # print("PREDICTIONS: \n")
+        # print(predictions)
+
+    accuracy /= total_predictions
+    loss_over_samples /= total_predictions
+
+    print(answers)
+    print(predictions)
+
+    print("\nACCURACY: ")
+    print(accuracy)
+    print("\nLOSS OVER SAMPLES:")
+    print(loss_over_samples)
+
+''' Function that takes a separated pandas dataframe of attributes and classifiers 
+and runs a linear regression model using the feature_select function in parse_csv.py '''
+def lin_reg_feature_selection(attributes, classifier, feature_count, test_size=0.2, test_count=100, classifier_type=3):
+
+    accuracy = 0
+    total_predictions = 0
+    loss_over_samples = 0
+
+    attributes = p.feature_select(attributes, classifier, feature_count)
+
+    for state in range(test_count):
+
+        x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
+        clf = linear_model.LinearRegression().fit(x_train, y_train)
+        predictions = clf.predict(x_test)
+        answers = y_test
+        # answers = y_test.tolist()
+
+        loss, successes, prediction_count = evaluate.evaluate(predictions, answers)
+        accuracy += successes
+        loss_over_samples += loss
+        total_predictions += prediction_count
+
+        # print("ANSWERS: \n")
+        # print(answers)
+        # print("PREDICTIONS: \n")
+        # print(predictions)
+
+    accuracy /= total_predictions
+    loss_over_samples /= total_predictions
+
+    print("\nACCURACY: ")
+    print(accuracy)
+    print("\nLOSS OVER SAMPLES:")
+    print(loss_over_samples)
+
+    return loss_over_samples, attributes
+
+
+
+    for state in range(test_count):
+        pipeline = Pipeline([('scaler', StandardScaler()), ('model',linear_model.Lasso())])
+        search = GridSearchCV(pipeline, {'model__alpha':np.arange(0.1,10,0.1)}, cv=10, scoring="neg_mean_squared_error",verbose=3)
+        x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
+        search.fit(x_train, y_train)
+
+    best_alpha = search.best_params_
+    coefficients = search.best_estimator_.named_steps['model'].coef_
+    importance = np.abs(coefficients)
+    # surviving_features = np.array(attributes)[importance > 0]
+
+    return best_alpha, coefficients, importance
+
+''' Function to transform attributes using PCA. 
+Works but oddly makes results slightly worse when plugged into another model '''
+def pca_transform_attributes(attributes, classifier):
+    pca = PCA(2)
+    # pca.fit(attributes)
+    # attributes = pca.transform(attributes)
+    projected = pca.fit_transform(attributes)
+    # principalComponents = pca.fit_transform(classifier)
+    plt.scatter(projected[:, 0], projected[:, 1], edgecolor='none', alpha=0.5, cmap=plt.cm.get_cmap('Spectral', 10))
+    plt.xlabel('component 1')
+    plt.ylabel('component 2')
+    plt.colorbar()
+    plt.show()
+    return attributes
+
+''' Function that takes a separated pandas dataframe of attributes and classifiers and 
+runs a LARS regression model to generate weights for the utility of each variable '''
+def lasso_lars(attributes, classifier, test_size=0.2, test_count=100, classifier_type=3):
+
+    accuracy = 0
+    total_predictions = 0
+    loss_over_samples = 0
+
+    for state in range(test_count):
+
+        x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
+        clf = linear_model.LassoLars(alpha=.1, normalize=False).fit(x_train, y_train)
+        predictions = clf.predict(x_test)
+        if classifier_type == 2:
+            answers = y_test
+        else:
+            answers = y_test.tolist()
+
+        loss, successes, prediction_count = evaluate.evaluate(predictions, answers)
+        accuracy += successes
+        loss_over_samples += loss
+        total_predictions += prediction_count
+
+        # print("\n\nCoefficients: ")
+        # print(clf.coef_path_)
+        # print("feature names: ")
+        # print(clf.feature_names_in_)
+        path = clf.coef_.tolist()
+        coefficient_nums = []
+        for i in range(len(path)):
+            if abs(path[i]) > 0.001:
+                coefficient_nums.append(i)
+        # print("coefficient numbers: ")
+        # print(coefficient_nums)
+        # print("ANSWERS: \n")
+        # print(answers)
+        # print("PREDICTIONS: \n")
+        # print(predictions)
+
+    accuracy /= total_predictions
+    loss_over_samples /= total_predictions
+
+    print(answers)
+    print(predictions)
+
+    print("\nACCURACY: ")
+    print(accuracy)
+    print("\nLOSS OVER SAMPLES:")
+    print(loss_over_samples)
+
+    return clf
+
+''' Function that runs a Gaussian random projection on the features before passing them into an ML function '''
+def gaussian_random_projection(attributes, classifier, attributes_wanted=10, test_size=0.2, test_count=100, classifier_type=3, prediction_method=linear_regression):
+
+    transformer = random_projection.GaussianRandomProjection(n_components=attributes_wanted)
+    adjusted_attributes = transformer.fit_transform(attributes)
+    prediction_method(adjusted_attributes, classifier, classifier_type=classifier_type, test_count=test_count, test_size=test_size)
+
+''' Function that runs a sparse random projection on the features before passing them into an ML function '''
+def sparse_random_projection(attributes, classifier, attributes_wanted=10, test_size=0.2, test_count=100, classifier_type=3, prediction_method=linear_regression):
+
+    transformer = random_projection.SparseRandomProjection(n_components=attributes_wanted)
+    adjusted_attributes = transformer.fit_transform(attributes)
+    prediction_method(adjusted_attributes, classifier, classifier_type=classifier_type, test_count=test_count, test_size=test_size)
 
 ''' Function that takes a separated pandas dataframe of attributes and classifiers and 
 runs a tenfold LASSO regression model '''
@@ -237,7 +492,7 @@ def split_into_folds(group_count=3, subject_count=60, fold_count=10):
 
     return folds
 
-
+''' Function to run a cox survival analysis. Doesn't work yet, will likely remove '''
 def survival_analysis(attributes, classifier, fold_count=10, cluster_count=9):
 
     # Get clusters
@@ -265,7 +520,7 @@ def survival_analysis(attributes, classifier, fold_count=10, cluster_count=9):
         print("labels: " + str(len(labels_copy)) + ", features: " + str(len(features_copy.columns)) + ", classifier: " + str(len(classifier_copy)))
         best_features = get_best_features_by_pearson(labels_copy, features_copy, classifier_copy)
 
-
+''' Function to run recursive backward selection, running an ML model with increasing numbers of features '''
 def recursive_feature_selection(attributes, classifier, estimator=None):
 
     if estimator is None:
@@ -275,15 +530,12 @@ def recursive_feature_selection(attributes, classifier, estimator=None):
 
     return selector
 
-def create_scoring():
-
-    pass
-
+''' Function to run sequential forward selection, running an ML model with increasing numbers of features '''
 def sequential_feature_selection(attributes, classifier, estimator=None, test_count=100, test_size=0.5):
 
     if estimator is None:
         estimator = KNeighborsClassifier(n_neighbors=5)
-        # estimator = make_pipeline(StandardScaler(), SGDClassifier(max_iter=1000, tol=1e-3, penalty='elasticnet'))
+        estimator = make_pipeline(StandardScaler(), linear_model.SGDClassifier(max_iter=1000, tol=1e-3, penalty='elasticnet'))
         # estimator = linear_model.Ridge(alpha=0.1, solver="saga")
 
     if estimator is not None:
