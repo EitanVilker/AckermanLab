@@ -531,27 +531,27 @@ def recursive_feature_selection(attributes, classifier, estimator=None):
     return selector
 
 ''' Function to run sequential forward selection, running an ML model with increasing numbers of features '''
-def sequential_feature_selection(attributes, classifier, estimator=None, test_count=100, test_size=0.5):
+def sequential_feature_selection(attributes, classifier, estimator=None, test_count=100, test_size=0.2):
 
     if estimator is None:
         estimator = KNeighborsClassifier(n_neighbors=5)
-        estimator = make_pipeline(StandardScaler(), linear_model.SGDClassifier(max_iter=1000, tol=1e-3, penalty='elasticnet'))
+        # estimator = make_pipeline(StandardScaler(), linear_model.SGDClassifier(max_iter=1000, tol=1e-3, penalty='elasticnet'))
         # estimator = linear_model.Ridge(alpha=0.1, solver="saga")
 
     if estimator is not None:
-        sfs = SFS(estimator, k_features=30, forward=True, floating=False, verbose=2,scoring='balanced_accuracy', cv=10)
+        sfs = SFS(estimator, k_features=30, forward=True, floating=False, verbose=2,scoring='neg_mean_squared_error', cv=10)
         sfs.fit(attributes, classifier)
-
+        print(sfs.k_feature_names_)
         print(sfs.k_score_)
         print(sfs.subsets_)
         return sfs.transform(attributes)
 
 ''' Function to separate holdouts for validation testing '''
-def get_holdouts(attributes, classifier, subject_count=60):
+def get_holdouts(attributes, classifier, holdout_proportion=0.2, subject_count=60):
     holdout_attributes = []
     holdout_classifiers = []
     to_remove = []
-    for i in range(subject_count // 10):
+    for i in range(subject_count // int(1 / holdout_proportion)):
         # Choose a random real subject index that hasn't been chosen yet
         rand = random.randint(0, subject_count - i - 1)
         while rand in to_remove:
@@ -563,28 +563,37 @@ def get_holdouts(attributes, classifier, subject_count=60):
         holdout_classifiers.append(classifier.loc[rand])
         classifier.pop(rand)
 
-    print(to_remove)
     attributes = attributes.drop(to_remove)
-    holdout_attributes = np.asarray(holdout_attributes)
+    holdout_attributes = np.asarray(holdout_attributes).astype('float32')
+    # holdout_classifiers = np.asarray(holdout_classifiers).astype('float32')
     holdout_classifiers = np.asarray(holdout_classifiers)
-    subject_count -= subject_count // 10
+    subject_count -= subject_count // int(1 / holdout_proportion)
 
     return attributes, classifier, holdout_attributes, holdout_classifiers, subject_count
 
 ''' Function to add randomized subjects within the bounds of the min and max feature values to compensate for insufficient data '''
-def add_artificial_subjects(attributes, classifier, additional_subject_count=60, feature_count=190, original_subject_count=60):
+def add_artificial_subjects(attributes, classifier, doing_holdouts=False, holdout_proportion=0.2, additional_subject_count=60, feature_count=190, original_subject_count=60):
 
     for i in range(additional_subject_count):
-        print(i)
         new_subject = []
-        rand = random.randint(0, original_subject_count - 1)
+        if not doing_holdouts:
+            rand = random.randint(0, original_subject_count - 1)
+        else:
+            rand = random.randint(0, original_subject_count // int(1 / holdout_proportion) - 1)
+            print("rand: " + str(rand))
         for j in range(feature_count):
-            feature_val = attributes.iloc[rand, j]
+            if doing_holdouts:
+                feature_val = attributes[rand, j]
+            else:
+                feature_val = attributes.iloc[rand, j]
             # Assumption here is that attributes have been standardized so new features should be within 3/10 of a standard deviation
             new_subject.append(random.uniform(feature_val - 0.3, feature_val + 0.3))
-        attributes.loc[len(attributes)] = new_subject
-        classifier.loc[len(classifier)] = classifier.iloc[rand]
-        # classifier = pd.concat([classifier, pd.Series(classifier[rand])])
-    print("\n\n\n________________________________________________________________________")
-    print(attributes)
-    return attributes
+        if doing_holdouts:
+            print(classifier[rand])
+            attributes = np.vstack((attributes, new_subject))
+            classifier = np.hstack((classifier, classifier[rand]))
+        else:
+            attributes = attributes.append(pd.Series(new_subject, index=attributes.columns[:len(new_subject)]), ignore_index=True)
+            classifier = classifier.append(pd.Series(classifier.iloc[rand]))            
+
+    return attributes, classifier

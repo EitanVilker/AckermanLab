@@ -34,10 +34,6 @@ def parse_csv(dim_x, dim_y, filename=False, data=False, group_number=0):
             i += 1
         classifier = group_labels[classifier]
 
-
-    print("Column count: " + str(len(attributes.columns.values)))
-
-
     # Normalize attributes
     averages = attributes.mean(axis=0)
     standard_deviations = attributes.std(axis=0)
@@ -92,8 +88,6 @@ def parse_csv(dim_x, dim_y, filename=False, data=False, group_number=0):
                 mean_attributes[j] /= subject_count
         mean_animals[str(i)] = mean_attributes
     
-    # print(mean_animals)
-
     return attributes, classifier1, classifier2, classifier3, classifier4, classifier5, classifier6, averages, standard_deviations, mean_animals
 
 ''' Parses the smaller csv, MOESM4. Rarely used so may be out of date '''
@@ -122,8 +116,8 @@ def is_float(element):
     except ValueError:
         return False
 
-''' Function to help with formatting output so that they can easily be collected as data '''
-def get_usable_data(folder, file1, file2, file3, file4, file5):
+''' Function to help with formatting nn output so that they can easily be collected as data '''
+def get_usable_data_nn(folder, file1, file2, file3, file4, file5):
     data = open(folder + "/" + file1)
     out_file1 = open(folder + "/" + file2, "w")
     out_file2 = open(folder + "/" + file3, "w")
@@ -145,6 +139,34 @@ def get_usable_data(folder, file1, file2, file3, file4, file5):
                 elif count == 3:
                     out_file4.write(item + "\n")
                 count += 1
+    data.close()
+    out_file1.close()
+    out_file2.close()
+    out_file3.close()
+    out_file4.close()
+
+''' Function to help with formatting nn output so that they can easily be collected as data '''
+def get_usable_data_sfs(folder, file1, file2, file3, file4, file5):
+    data = open(folder + "/" + file1)
+    out_file1 = open(folder + "/" + file2, "w")
+    out_file2 = open(folder + "/" + file3, "w")
+    out_file3 = open(folder + "/" + file4, "w")
+    out_file4 = open(folder + "/" + file5, "w")
+    lines = data.readlines()
+    for line in lines:
+        count = 0
+        line = line.split()
+        if len(line) == 1:
+            out_file1.write(line[0] + "\n")
+        else:
+            word = line[0]
+            word = word[2:]
+            out_file2.write(word)
+            for i in range(1, len(line) - 1):
+                out_file2.write("," + line[i])
+            word = line[len(line) - 1]
+            out_file2.write("," + word[:len(word) - 2] + "\n")
+
     data.close()
     out_file1.close()
     out_file2.close()
@@ -235,4 +257,5 @@ def feature_select(features, classifiers, feature_count):
 
 
 if __name__ == "__main__":
-    get_usable_data("output", "output0.csv", "output1.csv", "output2.csv", "output3.csv", "output4.csv")
+    # get_usable_data_nn("output", "output0.csv", "output1.csv", "output2.csv", "output3.csv", "output4.csv")
+    get_usable_data_sfs("output", "output0.csv", "output1.csv", "output2.csv", "output3.csv", "output4.csv")

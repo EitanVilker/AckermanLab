@@ -19,7 +19,8 @@ from sksurv.nonparametric import kaplan_meier_estimator
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.cluster import KMeans
 
-
+import warnings
+warnings.filterwarnings("ignore")
 random.seed(None)
 
 ''' Function to shuffle the labels of the subjects randomly for permutation testing '''
@@ -47,6 +48,11 @@ def randomize_labels(classifier, classifier_type=3):
 
 testing_binary_classifier = False
 testing_large_data_set = True
+permuting = False
+holdout_proportion = 0.2
+separating_holdouts = False
+removing_outliers = True
+adding_arm_feature = True
 feature_count = 190
 subject_count = 60
 
@@ -64,9 +70,6 @@ else:
     classifier2 = None
     classifier3 = None
     classifier4 = None
-
-permuting = False
-removing_outliers = True
 
 if len(sys.argv) == 1:
     classifier = classifier3
@@ -105,12 +108,41 @@ if removing_outliers:
             elif val < -CI_val:
                 attributes.iat[j, i] = -CI_val
 
-holdout_attributes = np.array([])
-holdout_classifiers = np.array([])
-if adding_artificial_subjects > 0:
+# Add feature for arm labels because it is highly informative using one-hot encoding
+if adding_arm_feature:
 
-    attributes, classifier, holdout_attributes, holdout_classifiers, subject_count = ml.get_holdouts(attributes, classifier)
-    attributes = ml.add_artificial_subjects(attributes, classifier, original_subject_count=subject_count, additional_subject_count=adding_artificial_subjects)
+    arm = classifier5.copy()
+    for i in range(len(arm)):
+        if arm[i] == "IM239":
+            arm[i] = 1
+        else:
+            arm[i] = 0
+    attributes["IM239"] = arm
+    arm = classifier5.copy()
+    for i in range(len(arm)):
+        if arm[i] == "IM mosaic":
+            arm[i] = 1
+        else:
+            arm[i] = 0
+    attributes["IM mosaic"] = arm
+    arm = classifier5.copy()
+    for i in range(len(arm)):
+        if arm[i] == "AE239":
+            arm[i] = 1
+        else:
+            arm[i] = 0
+    attributes["AE239"] = arm
+
+    feature_count += 3
+
+if separating_holdouts:
+    holdout_attributes = np.array([])
+    holdout_classifiers = np.array([])
+    attributes, classifier, holdout_attributes, holdout_classifiers, subject_count = ml.get_holdouts(attributes, classifier, holdout_proportion=holdout_proportion)
+
+print(adding_artificial_subjects)
+if adding_artificial_subjects > 0:
+    attributes, classifier = ml.add_artificial_subjects(attributes, classifier, original_subject_count=subject_count, additional_subject_count=adding_artificial_subjects, feature_count=feature_count)
 
 ''' Regression by group. For some reason works better/only if the groups are run individually '''
 # ml.ridge_regression(attributes, classifier3, test_count=1)
@@ -236,20 +268,15 @@ if adding_artificial_subjects > 0:
 
 # ml.survival_analysis(attributes, classifier)
 
-# print("Before permuting: ")
-# print(classifier)
-
-# print("After permuting")
-# print(classifier)
-
-# reduced_features = ml.sequential_feature_selection(attributes, classifier)
-# # ml.ridge_regression(reduced_features, classifier, classifier_type=3)
-# knn = KNeighborsClassifier(n_neighbors=5)
-# knn.fit(reduced_features, classifier)
-# for i in range(60 + adding_artificial_subjects):
-#     row = [reduced_features[i, :]]
-#     print(classifier[i])
-#     print(knn.predict_proba(row))
+''' Sequential Feature Selection '''
+reduced_features = ml.sequential_feature_selection(attributes, classifier)
+# ml.ridge_regression(reduced_features, classifier, classifier_type=3)
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(reduced_features, classifier)
+for i in range(60 + adding_artificial_subjects):
+    row = [reduced_features[i, :]]
+    print(classifier[i])
+    print(knn.predict_proba(row))
 
 # print(classifier)
 # estimator = CoxPHSurvivalAnalysis(alpha=1.0).fit(attributes, classifier)
@@ -271,4 +298,5 @@ if adding_artificial_subjects > 0:
 # plt.show()
 
 ''' Neural Network '''
-RNN.RNN_model(attributes, classifier, holdout_attributes=holdout_attributes, holdout_classifiers=holdout_classifiers, input_dim=190, subject_count=60+adding_artificial_subjects, artificial_count=adding_artificial_subjects)
+# holdout_attributes, holdout_classifiers = ml.add_artificial_subjects(holdout_attributes, holdout_classifiers, doing_holdouts=True, feature_count=feature_count, additional_subject_count=20, original_subject_count=subject_count)
+# RNN.RNN_model(attributes, classifier, holdout_attributes=holdout_attributes, holdout_classifiers=holdout_classifiers, input_dim=feature_count, subject_count=60+adding_artificial_subjects, artificial_count=adding_artificial_subjects)
