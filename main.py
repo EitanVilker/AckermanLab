@@ -15,9 +15,12 @@ import evaluate as e
 # ML functions
 from sklearn import linear_model, random_projection
 from sksurv.linear_model import CoxPHSurvivalAnalysis
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import SGDClassifier
 from sksurv.nonparametric import kaplan_meier_estimator
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.cluster import KMeans
+from sklearn.pipeline import Pipeline, make_pipeline
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -52,7 +55,7 @@ permuting = False
 holdout_proportion = 0.2
 separating_holdouts = False
 removing_outliers = True
-adding_arm_feature = True
+adding_arm_feature = False
 feature_count = 190
 subject_count = 60
 
@@ -200,9 +203,23 @@ if adding_artificial_subjects > 0:
 ''' Multi-Layer Perceptron '''
 # ml.mlp(attributes, classifier3, test_count=100, classifier_type=3)
 
-''' Basic Linear Regression '''
-# ml.linear_regression(attributes, classifier, test_count=1, classifier_type=4)
+''' Linear Regression '''
+# ml.linear_regression(attributes, classifier, test_count=100, classifier_type=int(sys.argv[1]))
 
+''' Logistic Regression '''
+# ml.logistic_regression(attributes, classifier, test_count=100, classifier_type=int(sys.argv[1]))
+
+''' SVM '''
+# ml.SVM(attributes, classifier, test_count=100)
+
+''' KNN '''
+# ml.KNN(attributes, classifier, test_count=100, classifier_type=int(sys.argv[1]))
+
+''' SGD '''
+# ml.SGD(attributes, classifier, test_count=100, classifier_type=int(sys.argv[1]))
+
+''' Ridge Regression '''
+# ml.ridge_regression(attributes, classifier, test_count=100, classifier_type=int(sys.argv[1]))
 
 ''' Random Projections '''
 
@@ -213,53 +230,53 @@ if adding_artificial_subjects > 0:
 # ml.sparse_random_projection(attributes, classifier2, classifier_type=2, prediction_method=ml.linear_regression)
 
 
-''''' Cox based 3-step feature selection '''''
+''''' 3-step feature selection '''''
 
 ''' Switch features and subjects for the purpose of clustering '''
-# features = attributes.transpose()
-# cluster_count=9
-# clustering, labels = ml.identify_clusters(features, clusters_wanted=cluster_count)
+features = attributes.transpose()
+cluster_count=9
+clustering, labels = ml.identify_clusters(features, clusters_wanted=cluster_count)
 
-# print(clustering)
+print(clustering)
 
-# print("params: ")
-# print(clustering.get_params())
-# print("\nClusters: ")
-# print(labels)
+print("params: ")
+print(clustering.get_params())
+print("\nClusters: ")
+print(labels)
 
 # ''' Graph clusters '''
 # # plt.scatter(features.iloc[:, 0], features.iloc[:, 1], c=labels, s=50, cmap='viridis')
 # # plt.title("Features separated into 9 clusters")
 # # plt.show()
 
-# ''' Remove bad features '''
-# best_features = ml.get_best_features_by_pearson(labels, features, classifier, cluster_count=cluster_count)
-# print("\nBest features: ")
-# print(best_features)
+''' Remove bad features '''
+best_features = ml.get_best_features_by_pearson(labels, features, classifier, cluster_count=cluster_count)
+print("\nBest features: ")
+print(best_features)
 
-# features_to_remove = []
-# for i in range(185):
-#     if attributes.columns.values[i] not in best_features:
-#         features_to_remove.append(attributes.columns.values[i])
+features_to_remove = []
+for i in range(185):
+    if attributes.columns.values[i] not in best_features:
+        features_to_remove.append(attributes.columns.values[i])
 
-# for feature in features_to_remove:
-#     attributes = attributes.drop(feature, axis=1)
+for feature in features_to_remove:
+    attributes = attributes.drop(feature, axis=1)
 
-# ''' Run model and permute '''
-# # estimator = ml.lasso_lars(attributes, classifier, test_count=100)
-# estimator = linear_model.Ridge(alpha=0.1, solver='cholesky')
+''' Run model and permute '''
+# estimator = ml.lasso_lars(attributes, classifier, test_count=100)
+estimator = linear_model.Ridge(alpha=0.1, solver='cholesky')
 
-# score, permutation_scores, pvalue = e.permutation_test_score(estimator, attributes, classifier)
+score, permutation_scores, pvalue = e.permutation_test_score(estimator, attributes, classifier)
 
-# print("Score: " + str(score))
-# print("Permutation scores: ")
-# print(permutation_scores)
-# print("pvalue: " + str(pvalue))
+print("Score: " + str(score))
+print("Permutation scores: ")
+print(permutation_scores)
+print("pvalue: " + str(pvalue))
 
-# estimator.fit(attributes, classifier)
+estimator.fit(attributes, classifier)
 
-# print(estimator.predict(attributes))
-# print(estimator.score(attributes, classifier))
+print(estimator.predict(attributes))
+print(estimator.score(attributes, classifier))
 
 # ml.pca_transform_attributes(attributes, classifier)
 
@@ -269,14 +286,17 @@ if adding_artificial_subjects > 0:
 # ml.survival_analysis(attributes, classifier)
 
 ''' Sequential Feature Selection '''
-reduced_features = ml.sequential_feature_selection(attributes, classifier)
-# ml.ridge_regression(reduced_features, classifier, classifier_type=3)
-knn = KNeighborsClassifier(n_neighbors=5)
-knn.fit(reduced_features, classifier)
-for i in range(60 + adding_artificial_subjects):
-    row = [reduced_features[i, :]]
-    print(classifier[i])
-    print(knn.predict_proba(row))
+# reduced_features = ml.sequential_feature_selection(attributes, classifier)
+# ml.ridge_regression(reduced_features, classifier, classifier_type=int(sys.argv[1]))
+# # knn = KNeighborsClassifier(n_neighbors=5)
+# knn.fit(reduced_features, classifier)
+# # estimator = make_pipeline(StandardScaler(), SGDClassifier(max_iter=1000, tol=1e-3, penalty='elasticnet'))
+# # estimator.fit(reduced_features, classifier)
+# for i in range(60 + adding_artificial_subjects):
+#     row = [reduced_features[i, :]]
+#     print(classifier[i])
+#     print(knn.predict(row))
+#     # print(estimator.predict(row))
 
 # print(classifier)
 # estimator = CoxPHSurvivalAnalysis(alpha=1.0).fit(attributes, classifier)

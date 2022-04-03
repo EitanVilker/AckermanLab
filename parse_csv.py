@@ -145,13 +145,12 @@ def get_usable_data_nn(folder, file1, file2, file3, file4, file5):
     out_file3.close()
     out_file4.close()
 
-''' Function to help with formatting nn output so that they can easily be collected as data '''
-def get_usable_data_sfs(folder, file1, file2, file3, file4, file5):
+''' Function to help with formatting sfs output so that they can easily be collected as data '''
+def get_usable_data_sfs(folder, file1, file2, file3):
     data = open(folder + "/" + file1)
     out_file1 = open(folder + "/" + file2, "w")
     out_file2 = open(folder + "/" + file3, "w")
-    out_file3 = open(folder + "/" + file4, "w")
-    out_file4 = open(folder + "/" + file5, "w")
+
     lines = data.readlines()
     for line in lines:
         count = 0
@@ -170,20 +169,68 @@ def get_usable_data_sfs(folder, file1, file2, file3, file4, file5):
     data.close()
     out_file1.close()
     out_file2.close()
-    out_file3.close()
-    out_file4.close()
+
+def get_usable_data_correlation(folder, file1, file2):
+    data = open(folder + "/" + file1)
+    out_file1 = open(folder + "/" + file2, "w")
+    lines = data.readlines()
+    count = 0
+    for line in lines:
+        line = line.rstrip("\n")
+        if count % 2 == 0:
+            if line == "IM239":
+                out_file1.write("0,")
+            elif line == "IM mosaic":
+                out_file1.write("1,")
+            elif line == "AE239":
+                out_file1.write("2,")
+        else:
+            line = line[2: len(line) - 2]
+            print(line)
+            if line == "IM239":
+                out_file1.write("0\n")
+            elif line == "IM mosaic":
+                out_file1.write("1\n")
+            elif line == "AE239":
+                out_file1.write("2\n")
+        count += 1
+
+def remove_brackets(folder, file1, file2):
+    data = open(folder + "/" + file1)
+    out_file1 = open(folder + "/" + file2, "w")
+    lines = data.readlines()
+    count = 0
+    for line in lines:
+        line = line.rstrip("\n")
+        if count % 2 == 1:
+            line = line[1:len(line) - 1]
+            print(line)
+            out_file1.write(line + ",")
+        else:
+            out_file1.write(line + "\n")
+        
+        count += 1
 
 ''' Function to separate the attributes into the three individual arms '''
 def separate_into_groups(filename):
 
     data = pd.read_csv(filename)
-    group_a = data.copy()
-    group_b = data.copy()
-    group_c = data.copy()
+    attributes = data
+    # attributes = data.drop('Group', axis=1)
+    attributes = attributes.drop('Time to Infection', axis=1) # Classifier 4 - Challenges
+    attributes = attributes.drop('Resisted Infection?', axis=1) # Classifier 1 - Resisted Infection y/n
+    attributes = attributes.drop('Log Peak VL', axis=1) # Classifier 2 - Log Peak Viral Load
+    attributes = attributes.drop('Log Set Pt VL', axis=1)
+    group_a = attributes.copy()
+    group_b = attributes.copy()
+    group_c = attributes.copy()
 
     group_a = group_a.loc[(group_a["Group"] == "IM239")]
     group_b = group_b.loc[(group_b["Group"] == "IM mosaic")]
     group_c = group_c.loc[(group_c["Group"] == "AE239")]
+    group_a.drop('Group', axis=1)
+    group_b.drop('Group', axis=1)
+    group_c.drop('Group', axis=1)
 
     return group_a, group_b, group_c
 
@@ -258,4 +305,6 @@ def feature_select(features, classifiers, feature_count):
 
 if __name__ == "__main__":
     # get_usable_data_nn("output", "output0.csv", "output1.csv", "output2.csv", "output3.csv", "output4.csv")
-    get_usable_data_sfs("output", "output0.csv", "output1.csv", "output2.csv", "output3.csv", "output4.csv")
+    # get_usable_data_sfs("output", "output0.csv", "output1.csv", "output2.csv", "output3.csv", "output4.csv")
+    # get_usable_data_correlation("output", "output0.csv", "output4.csv")
+    remove_brackets("output", "output0.csv", "output1.csv")

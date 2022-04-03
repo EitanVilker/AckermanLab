@@ -12,7 +12,7 @@ from sklearn.cluster import AgglomerativeClustering, SpectralClustering
 from sklearn.neural_network import MLPClassifier
 from sklearn.decomposition import PCA
 from sklearn.model_selection import StratifiedKFold, RepeatedStratifiedKFold, train_test_split, GridSearchCV
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, mean_squared_error
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.feature_selection import RFECV
 from sklearn.neighbors import KNeighborsClassifier, kneighbors_graph
@@ -35,13 +35,16 @@ def linear_regression(attributes, classifier, test_size=0.2, test_count=100, cla
         x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
         clf = linear_model.LinearRegression().fit(x_train, y_train)
         predictions = clf.predict(x_test)
-        answers = y_test
-        # answers = y_test.tolist()
+        # answers = y_test
+        answers = y_test.tolist()
 
         loss, successes, prediction_count = evaluate(predictions, answers)
         accuracy += successes
         loss_over_samples += loss
         total_predictions += prediction_count
+
+        # print(successes/prediction_count)
+        print(-1 * mean_squared_error(answers, predictions))
 
         # print("ANSWERS: \n")
         # print(answers)
@@ -70,13 +73,15 @@ def logistic_regression(attributes, classifier, classifier_type=3, test_size=0.2
         x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
         clf = linear_model.LogisticRegression(random_state=0).fit(x_train, y_train)
         predictions = clf.predict(x_test)
-        answers = y_test
-        # answers = y_test.tolist()
+        # answers = y_test
+        answers = y_test.tolist()
 
-        loss, successes, prediction_count = evaluate.evaluate(predictions, answers)
+        loss, successes, prediction_count = evaluate(predictions, answers)
         accuracy += successes
         loss_over_samples += loss
         total_predictions += prediction_count
+
+        print(successes/prediction_count)
 
         # print("ANSWERS: \n")
         # print(answers)
@@ -92,15 +97,109 @@ def logistic_regression(attributes, classifier, classifier_type=3, test_size=0.2
     print(loss_over_samples)
 
 ''' Function to run a basic SVM model '''
-def SVM(attributes, classifier, test_size=0.2):
-    X_train, X_test, y_train, y_test = train_test_split(attributes, classifier, test_size = 0.20)
+def SVM(attributes, classifier, test_size=0.2, test_count=100):
 
-    svclassifier = SVC(kernel='sigmoid')
-    svclassifier.fit(X_train, y_train)
+    accuracy = 0
+    total_predictions = 0
+    loss_over_samples = 0
 
-    y_pred = svclassifier.predict(X_test)
-    print(confusion_matrix(y_test,y_pred))
-    print(classification_report(y_test,y_pred))
+    for state in range(test_count):
+
+        x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
+        clf = SVC(kernel='linear').fit(x_train, y_train)
+        predictions = clf.predict(x_test)
+        # answers = y_test
+        answers = y_test.tolist()
+
+        loss, successes, prediction_count = evaluate(predictions, answers, nominal=False)
+        accuracy += successes
+        loss_over_samples += loss
+        total_predictions += prediction_count
+
+        # print(successes/prediction_count)
+        print(-1 * mean_squared_error(answers, predictions))
+
+        # print("ANSWERS: \n")
+        # print(answers)
+        # print("PREDICTIONS: \n")
+        # print(predictions)
+
+    accuracy /= total_predictions
+    loss_over_samples /= total_predictions
+
+    print("\nACCURACY: ")
+    print(accuracy)
+    print("\nLOSS OVER SAMPLES:")
+    print(loss_over_samples)
+
+''' Function to run a simple KNN model '''
+def KNN(attributes, classifier, test_size=0.2, test_count=1, classifier_type=3):
+    accuracy = 0
+    total_predictions = 0
+    loss_over_samples = 0
+
+    for state in range(test_count):
+
+        x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
+        clf = KNeighborsClassifier(n_neighbors=5).fit(x_train, y_train)
+        predictions = clf.predict(x_test)
+        # answers = y_test
+        answers = y_test.tolist()
+
+        loss, successes, prediction_count = evaluate(predictions, answers, nominal=True)
+        accuracy += successes
+        loss_over_samples += loss
+        total_predictions += prediction_count
+
+        print(successes/prediction_count)
+
+        # print("ANSWERS: \n")
+        # print(answers)
+        # print("PREDICTIONS: \n")
+        # print(predictions)
+
+    accuracy /= total_predictions
+    loss_over_samples /= total_predictions
+
+    print("\nACCURACY: ")
+    print(accuracy)
+    print("\nLOSS OVER SAMPLES:")
+    print(loss_over_samples)
+
+''' Function to run SGD model '''
+def SGD(attributes, classifier, test_size=0.2, test_count=1, classifier_type=3):
+
+    accuracy = 0
+    total_predictions = 0
+    loss_over_samples = 0
+
+    for state in range(test_count):
+
+        x_train, x_test, y_train, y_test = train_test_split(attributes, classifier, test_size=test_size, random_state=state)
+        clf = make_pipeline(StandardScaler(), linear_model.SGDClassifier(max_iter=1000, tol=1e-3)).fit(x_train, y_train)
+        predictions = clf.predict(x_test)
+        # answers = y_test
+        answers = y_test.tolist()
+
+        loss, successes, prediction_count = evaluate(predictions, answers, nominal=True)
+        accuracy += successes
+        loss_over_samples += loss
+        total_predictions += prediction_count
+
+        print(successes/prediction_count)
+
+        # print("ANSWERS: \n")
+        # print(answers)
+        # print("PREDICTIONS: \n")
+        # print(predictions)
+
+    accuracy /= total_predictions
+    loss_over_samples /= total_predictions
+
+    print("\nACCURACY: ")
+    print(accuracy)
+    print("\nLOSS OVER SAMPLES:")
+    print(loss_over_samples)
 
 ''' Function that takes a separated pandas dataframe of attributes and classifiers and 
 runs a multi-layer perceptron model '''
@@ -157,10 +256,13 @@ def ridge_regression(attributes, classifier, test_size=0.2, test_count=100, clas
         else:
             answers = y_test.tolist()
 
-        loss, successes, prediction_count = evaluate.evaluate(predictions, answers)
+        loss, successes, prediction_count = evaluate(predictions, answers, nominal=False)
         accuracy += successes
         loss_over_samples += loss
         total_predictions += prediction_count
+
+        # print(loss/prediction_count)
+        print(mean_squared_error(answers, predictions))
 
         # print("ANSWERS: \n")
         # print(answers)
@@ -173,10 +275,12 @@ def ridge_regression(attributes, classifier, test_size=0.2, test_count=100, clas
     print(answers)
     print(predictions)
 
-    print("\nACCURACY: ")
-    print(accuracy)
-    print("\nLOSS OVER SAMPLES:")
-    print(loss_over_samples)
+    # print("\nACCURACY: ")
+    # print(accuracy)
+    # print("\nLOSS OVER SAMPLES:")
+    # print(loss_over_samples)
+    print("\nMSE:")
+    print(mean_squared_error(answers, predictions))
 
 ''' Function that takes a separated pandas dataframe of attributes and classifiers 
 and runs a linear regression model using the feature_select function in parse_csv.py '''
@@ -196,7 +300,7 @@ def lin_reg_feature_selection(attributes, classifier, feature_count, test_size=0
         answers = y_test
         # answers = y_test.tolist()
 
-        loss, successes, prediction_count = evaluate.evaluate(predictions, answers)
+        loss, successes, prediction_count = evaluate(predictions, answers)
         accuracy += successes
         loss_over_samples += loss
         total_predictions += prediction_count
@@ -264,7 +368,7 @@ def lasso_lars(attributes, classifier, test_size=0.2, test_count=100, classifier
         else:
             answers = y_test.tolist()
 
-        loss, successes, prediction_count = evaluate.evaluate(predictions, answers)
+        loss, successes, prediction_count = evaluate(predictions, answers)
         accuracy += successes
         loss_over_samples += loss
         total_predictions += prediction_count
@@ -534,12 +638,12 @@ def recursive_feature_selection(attributes, classifier, estimator=None):
 def sequential_feature_selection(attributes, classifier, estimator=None, test_count=100, test_size=0.2):
 
     if estimator is None:
-        estimator = KNeighborsClassifier(n_neighbors=5)
+        # estimator = KNeighborsClassifier(n_neighbors=5)
         # estimator = make_pipeline(StandardScaler(), linear_model.SGDClassifier(max_iter=1000, tol=1e-3, penalty='elasticnet'))
-        # estimator = linear_model.Ridge(alpha=0.1, solver="saga")
+        estimator = linear_model.Ridge(alpha=0.1, solver="saga")
 
     if estimator is not None:
-        sfs = SFS(estimator, k_features=30, forward=True, floating=False, verbose=2,scoring='neg_mean_squared_error', cv=10)
+        sfs = SFS(estimator, k_features=50, forward=True, floating=False, verbose=2,scoring='neg_mean_squared_error', cv=10)
         sfs.fit(attributes, classifier)
         print(sfs.k_feature_names_)
         print(sfs.k_score_)
