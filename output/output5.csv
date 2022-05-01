@@ -1,1 +1,85 @@
-G0FB,G1.2,G1S1F,G2S2FB,R2A.3.SIV.E543.gp140,R2A.3.SIVmac239.gp140,R2A.3.G49,R2A.3.SIVsm.E660.84,R2A.4.high.SIVmac239.gp120,R2A.4.high.SIVmac239.gp130,R2A.4.high.C1.TR,R3A.3.J08.V1V2.E660.084.AVI.His,R3A.3.J08.V1V2.mac239.AVI.His,R3A.3.V1a,R3A.3.G119,C1q.G73,C1q.SIVsm.E660.2A5,rR2A.1.SIVmac239.gp140,rR3A.1.SIVcpz.EK505.gp120,rR3A.1.SIVmac1A11.gp140,hC1q.SIVcpz.EK505.gp120,hFcgRIIIb.SIVsmE543.gp140,rR3A.3.SIVmac1A11.gp140,hFcgRIIa.SIVmac1A11.gp140,hFcgRIIa.SIVmac239.gp130,hFcgRIIa.SIVsmE543.gp140,aRhIgG.PE.low.SIVcpz.EK505.gp120,aRhIgG.PE.low.G119,aRhIgG.PE.high.SIV.1A11.gp140,aRhIgG.PE.high.V1a,aRhIgG.PE.high.SIVsm.E660.2A5,C1.AK.SIV.gp120.biotinylated.peptide.IgA,G49.SIV.gp120.biotyinylated.peptide.IgA,G73.SIV.gp120.biotinylated.peptide.IgA
+[2022-04-30 22:17:50] Features: 1/22 -- score: 0.43888888888888894[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 189 out of 189 | elapsed:    6.8s finished
+
+[2022-04-30 22:17:57] Features: 2/22 -- score: 0.5166666666666667[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 188 out of 188 | elapsed:    7.3s finished
+
+[2022-04-30 22:18:04] Features: 3/22 -- score: 0.5277777777777778[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 187 out of 187 | elapsed:    6.6s finished
+
+[2022-04-30 22:18:11] Features: 4/22 -- score: 0.5166666666666666[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 186 out of 186 | elapsed:    6.6s finished
+
+[2022-04-30 22:18:17] Features: 5/22 -- score: 0.5388888888888889[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 185 out of 185 | elapsed:    7.3s finished
+
+[2022-04-30 22:18:25] Features: 6/22 -- score: 0.5388888888888889[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 184 out of 184 | elapsed:    6.8s finished
+
+[2022-04-30 22:18:32] Features: 7/22 -- score: 0.5277777777777778[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 183 out of 183 | elapsed:    6.9s finished
+
+[2022-04-30 22:18:39] Features: 8/22 -- score: 0.5555555555555556[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 182 out of 182 | elapsed:    6.6s finished
+
+[2022-04-30 22:18:45] Features: 9/22 -- score: 0.5833333333333333[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 181 out of 181 | elapsed:    6.3s finished
+
+[2022-04-30 22:18:52] Features: 10/22 -- score: 0.5722222222222222[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 180 out of 180 | elapsed:    6.3s finished
+
+[2022-04-30 22:18:58] Features: 11/22 -- score: 0.5333333333333333[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 179 out of 179 | elapsed:    6.3s finished
+
+[2022-04-30 22:19:05] Features: 12/22 -- score: 0.5388888888888889[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 178 out of 178 | elapsed:    6.3s finished
+
+[2022-04-30 22:19:11] Features: 13/22 -- score: 0.5722222222222222[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 177 out of 177 | elapsed:    6.3s finished
+
+[2022-04-30 22:19:17] Features: 14/22 -- score: 0.5888888888888888[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 176 out of 176 | elapsed:    6.3s finished
+
+[2022-04-30 22:19:24] Features: 15/22 -- score: 0.5277777777777777[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 175 out of 175 | elapsed:    6.3s finished
+
+[2022-04-30 22:19:30] Features: 16/22 -- score: 0.5611111111111111[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 174 out of 174 | elapsed:    6.2s finished
+
+[2022-04-30 22:19:37] Features: 17/22 -- score: 0.5611111111111111[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 173 out of 173 | elapsed:    6.4s finished
+
+[2022-04-30 22:19:43] Features: 18/22 -- score: 0.55[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 172 out of 172 | elapsed:    6.7s finished
+
+[2022-04-30 22:19:50] Features: 19/22 -- score: 0.5555555555555556[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 171 out of 171 | elapsed:    6.4s finished
+
+[2022-04-30 22:19:56] Features: 20/22 -- score: 0.5333333333333332[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 170 out of 170 | elapsed:    6.5s finished
+
+[2022-04-30 22:20:03] Features: 21/22 -- score: 0.5388888888888889[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done 169 out of 169 | elapsed:    6.3s finished
+
+[2022-04-30 22:20:09] Features: 22/22 -- score: 0.5111111111111111('IFNγ', 'G2', 'R2A.3.SIVmac239.gp120', 'R2A.3.SIVmac239.gp130', 'R2A.3.SIV.E543.

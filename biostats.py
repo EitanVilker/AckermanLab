@@ -65,7 +65,8 @@ def find_best_features(file='41591_2018_161_MOESM3_ESM.csv', feature_count=190):
         # if feature_name[len(feature_name) - 3: len(feature_name)] == "IgA":
         #     print(feature_name + "," + str(f) + "," + str(p))
         # print("Feature: " + feature_name + ", p: " + str(p))
-        if p < 0.05:
+        # if p < 0.05:
+        if True:
             feature_indices.append(i)
             feature_names.append(group_a.columns[i])
 
@@ -96,8 +97,8 @@ def find_best_features(file='41591_2018_161_MOESM3_ESM.csv', feature_count=190):
         index = bisect.bisect(keys, p_values[2]); feature_value_tuples.insert(index, (p_values[2], result, feature_name, "IM mosaic vs IM239")); keys.insert(index, p_values[2])
 
     # Output best p-values/features
-    for i in range(100):
-        fvt = feature_value_tuples[i]
+    # for i in range(100):
+    #     fvt = feature_value_tuples[i]
         # print("Feature:  " + str(fvt[2]) + ", Treatments: " + str(fvt[3]) + ", P-value: " + str("{:.2f}".format(fvt[0])) + ", Meandiffs: " + str(fvt[1].meandiffs))
 
     # count = 0
@@ -111,12 +112,18 @@ def find_best_features(file='41591_2018_161_MOESM3_ESM.csv', feature_count=190):
     rejected, corrected = fdrcorrection(keys)
     for i in range(len(corrected)):
         feature_name = feature_value_tuples[i][2]
-        if feature_name[len(feature_name) - 3: len(feature_name)] == "IgA":
-            result = feature_value_tuples[i][1]
-            print("\n" + feature_name)
-            print(result.pvalues)
-            print(result)
-            print(corrected[i])
+        # Negative meandiff means group 1 is larger than group 2
+        # if feature_name[len(feature_name) - 3: len(feature_name)] == "IgA":
+        # if feature_name[3:6] == "IgG" or feature_name[1:4] == "IgG":
+        # if feature_name[1:5] == "FcgR" or feature_name[:4] == "rR2A" or feature_name[:4] == "rR3A" or feature_name[:3] == "R3A" or feature_name[:3] == "R2A":
+        # if feature_name[:3] == "MIP" or feature_name[:3] == "IFN":
+        if feature_name[:9] == "R2A.4.low":
+            if True: #corrected[i] < 0.05:
+                result = feature_value_tuples[i][1]
+                print("\n" + feature_name)
+                print(result.pvalues)
+                print(result)
+                print(corrected[i])
 
         # if i % 10 == 0:
             # print(corrected[i])
@@ -147,7 +154,7 @@ def find_best_features(file='41591_2018_161_MOESM3_ESM.csv', feature_count=190):
 
 filename = "41591_2018_161_MOESM3_ESM.csv"
 find_best_features(file=filename)
-# attributes, classifier1, classifier2, classifier3, classifier4, classifier5, classifier6, averages, standard_deviations, mean_animals = parse_csv.parse_csv(190, 60, filename=filename)
+attributes, classifier1, classifier2, classifier3, classifier4, classifier5, classifier6, averages, standard_deviations, mean_animals = parse_csv.parse_csv(190, 60, filename=filename)
 
 # folder = "Correlations/"
 # file_path = folder + "c4.csv"
@@ -172,3 +179,14 @@ find_best_features(file=filename)
 # # print("Kendalltau r: " + str(r))
 # print(r)
 # print(p)
+
+# group_a, group_b, group_c = parse_csv.separate_into_groups(filename)
+# a = group_a.iloc[:, 3]
+# b = group_b.iloc[:, 3]
+# c = group_c.iloc[:, 3]
+
+# group_names =  ["IM239", "IM mosaic", "AE239"]
+
+# # Run multiple comparison tests between each treatment
+# result = tukey(group_names, a, b, c)
+# print(result)

@@ -9,7 +9,7 @@ import tensorflow.keras as keras
 # Local Python scripts
 import parse_csv as p
 import ml_functions as ml
-import RNN
+import NN
 import evaluate as e
 
 # ML functions
@@ -49,6 +49,14 @@ def randomize_labels(classifier, classifier_type=3):
             elif rand == 2:
                 classifier[i] = "IM mosaic"
 
+''' Adjusts feature values for the purpose of assessing directionality '''
+def change_feature_values(attributes, subject_count=60, feature_index=None, change_amount=-2):
+    for i in range(subject_count):
+        if feature_index is not None:
+            attributes[i, feature_index] += change_amount
+    return attributes         
+
+
 testing_binary_classifier = False
 testing_large_data_set = True
 permuting = False
@@ -56,6 +64,7 @@ holdout_proportion = 0.2
 separating_holdouts = False
 removing_outliers = True
 adding_arm_feature = False
+removing_select_features = False
 feature_count = 190
 subject_count = 60
 
@@ -100,6 +109,9 @@ else:
     adding_artificial_subjects = 0
 if permuting:
     randomize_labels(classifier, classifier_type=int(sys.argv[1]))
+
+if removing_select_features:
+    feature_count -= 4
 
 if removing_outliers:
     CI_val = 1.645
@@ -147,15 +159,6 @@ print(adding_artificial_subjects)
 if adding_artificial_subjects > 0:
     attributes, classifier = ml.add_artificial_subjects(attributes, classifier, original_subject_count=subject_count, additional_subject_count=adding_artificial_subjects, feature_count=feature_count)
 
-''' Regression by group. For some reason works better/only if the groups are run individually '''
-# ml.ridge_regression(attributes, classifier3, test_count=1)
-# group_a, group_b, group_c = p.separate_into_groups(filename)
-# attributes, classifier1, classifier2, classifier3, classifier4, averages, standard_deviations = p.parse_csv(185, 20, data=group_a, group_number=0)
-# ml.ridge_regression(attributes, classifier2, test_count=1000, classifier_type=3)
-# attributes, classifier1, classifier2, classifier3, classifier4, averages, standard_deviations = p.parse_csv(185, 20, data=group_b, group_number=1)
-# ml.ridge_regression(attributes, classifier2, test_count=1000, classifier_type=3)
-# attributes, classifier1, classifier2, classifier3, classifier4, averages, standard_deviations = p.parse_csv(185, 20, data=group_c, group_number=2)
-# ml.ridge_regression(attributes, classifier2, test_count=1000, classifier_type=3)
 
 ''' Perform feature selection '''
 # current_best_feature_count = 0
@@ -233,50 +236,51 @@ if adding_artificial_subjects > 0:
 ''''' 3-step feature selection '''''
 
 ''' Switch features and subjects for the purpose of clustering '''
-features = attributes.transpose()
-cluster_count=9
-clustering, labels = ml.identify_clusters(features, clusters_wanted=cluster_count)
+# features = attributes.transpose()
+# cluster_count=9
+# clustering, labels = ml.identify_clusters(features, clusters_wanted=cluster_count)
 
-print(clustering)
+# print(clustering)
 
-print("params: ")
-print(clustering.get_params())
-print("\nClusters: ")
-print(labels)
+# print("params: ")
+# print(clustering.get_params())
+# print("\nClusters: ")
+# print(labels)
 
 # ''' Graph clusters '''
 # # plt.scatter(features.iloc[:, 0], features.iloc[:, 1], c=labels, s=50, cmap='viridis')
 # # plt.title("Features separated into 9 clusters")
 # # plt.show()
 
-''' Remove bad features '''
-best_features = ml.get_best_features_by_pearson(labels, features, classifier, cluster_count=cluster_count)
-print("\nBest features: ")
-print(best_features)
+# ''' Remove bad features '''
+# best_features = ml.get_best_features_by_pearson(labels, features, classifier, cluster_count=cluster_count)
+# print("\nBest features: ")
+# print(best_features)
 
-features_to_remove = []
-for i in range(185):
-    if attributes.columns.values[i] not in best_features:
-        features_to_remove.append(attributes.columns.values[i])
+# features_to_remove = []
+# for i in range(185):
+#     if attributes.columns.values[i] not in best_features:
+#         features_to_remove.append(attributes.columns.values[i])
 
-for feature in features_to_remove:
-    attributes = attributes.drop(feature, axis=1)
+# for feature in features_to_remove:
+#     attributes = attributes.drop(feature, axis=1)
 
-''' Run model and permute '''
-# estimator = ml.lasso_lars(attributes, classifier, test_count=100)
-estimator = linear_model.Ridge(alpha=0.1, solver='cholesky')
+# ''' Run model and permute '''
+# # estimator = ml.lasso_lars(attributes, classifier, test_count=100)
+# # estimator = linear_model.Ridge(alpha=0.1, solver='cholesky')
+# ml.ridge_regression(attributes, classifier, test_count=100, classifier_type=int(sys.argv[1]))
 
-score, permutation_scores, pvalue = e.permutation_test_score(estimator, attributes, classifier)
+# score, permutation_scores, pvalue = e.permutation_test_score(estimator, attributes, classifier)
 
-print("Score: " + str(score))
-print("Permutation scores: ")
-print(permutation_scores)
-print("pvalue: " + str(pvalue))
+# print("Score: " + str(score))
+# print("Permutation scores: ")
+# print(permutation_scores)
+# print("pvalue: " + str(pvalue))
 
-estimator.fit(attributes, classifier)
+# estimator.fit(attributes, classifier)
 
-print(estimator.predict(attributes))
-print(estimator.score(attributes, classifier))
+# print(estimator.predict(attributes))
+# print(estimator.score(attributes, classifier))
 
 # ml.pca_transform_attributes(attributes, classifier)
 
@@ -286,37 +290,57 @@ print(estimator.score(attributes, classifier))
 # ml.survival_analysis(attributes, classifier)
 
 ''' Sequential Feature Selection '''
-# reduced_features = ml.sequential_feature_selection(attributes, classifier)
-# ml.ridge_regression(reduced_features, classifier, classifier_type=int(sys.argv[1]))
-# # knn = KNeighborsClassifier(n_neighbors=5)
-# knn.fit(reduced_features, classifier)
-# # estimator = make_pipeline(StandardScaler(), SGDClassifier(max_iter=1000, tol=1e-3, penalty='elasticnet'))
-# # estimator.fit(reduced_features, classifier)
-# for i in range(60 + adding_artificial_subjects):
-#     row = [reduced_features[i, :]]
-#     print(classifier[i])
-#     print(knn.predict(row))
-#     # print(estimator.predict(row))
+sfs = ml.sequential_feature_selection(attributes, classifier)
+reduced_features = sfs.transform(attributes)
+# estimator = linear_model.Ridge(alpha=0.1, solver='saga')
+# estimator = KNeighborsClassifier(n_neighbors=5)
+estimator = linear_model.LinearRegression()
+# estimator = make_pipeline(StandardScaler(), SGDClassifier(max_iter=1000, tol=1e-3, penalty='elasticnet'))
+estimator.fit(reduced_features, classifier)
 
-# print(classifier)
-# estimator = CoxPHSurvivalAnalysis(alpha=1.0).fit(attributes, classifier)
-# surv_funcs = estimator.predict_survival_function(mean_animals.transpose())
-# # tup_list1 = []
-# # tup_list2 = []
-# # for i in range(60):
-# #     print(classifier6[i])
-# #     tup_list1.append(classifier6[i][0])
-# #     tup_list2.append(classifier6[i][1])
-# # time, survival_prob = kaplan_meier_estimator(tup_list1, tup_list2)
-# # plt.step(time, survival_prob, where="post")
-# plt.ylabel("est. probability of survival $\hat{S}(t)$")
-# plt.xlabel("challenges $t$")
-# for fn in surv_funcs:
-#     plt.step(fn.x, fn(fn.x), where="post")
+''' Identifying directionality and weights of features '''
+feature_weight_dict = {}
+feature_weight_dict["Base Model"] = 0
+for i in range(60 + adding_artificial_subjects):
+    row = [reduced_features[i, :]]
+    prediction = estimator.predict(row).item()
+    feature_weight_dict["Base Model"] += prediction / 60
 
-# plt.ylim(0, 1)
-# plt.show()
+for i in range(len(sfs.k_feature_names_)):
+    current_feature = sfs.k_feature_names_[i]
+    feature_weight_dict[current_feature] = 0
+    reduced_features_copy = reduced_features.copy()
+    reduced_features_copy = change_feature_values(reduced_features_copy, feature_index=i, change_amount=-1)
+    # reduced_features_copy = np.delete(reduced_features_copy, i, 1)
+    # estimator.fit(reduced_features, classifier)
+    for j in range(60 + adding_artificial_subjects):
+        row = [reduced_features_copy[j, :]]
+        prediction = estimator.predict(row).item()
+        feature_weight_dict[current_feature] += prediction / 60
+
+
+print("\n\nGetting weights, so to speak")
+print(feature_weight_dict)
+
+base_val = feature_weight_dict["Base Model"]
+feature_weight_dict = {}
+feature_weight_dict["Base Model"] = base_val
+
+for i in range(len(sfs.k_feature_names_)):
+    current_feature = sfs.k_feature_names_[i]
+    feature_weight_dict[current_feature] = 0
+    reduced_features_copy = reduced_features.copy()
+    reduced_features_copy = change_feature_values(reduced_features_copy, feature_index=i, change_amount=1)
+    # reduced_features_copy = np.delete(reduced_features_copy, i, 1)
+    # estimator.fit(reduced_features, classifier)
+    for j in range(60 + adding_artificial_subjects):
+        row = [reduced_features_copy[j, :]]
+        prediction = estimator.predict(row).item()
+        feature_weight_dict[current_feature] += prediction / 60
+
+print("\n\nGetting weights, so to speak")
+print(feature_weight_dict)
 
 ''' Neural Network '''
 # holdout_attributes, holdout_classifiers = ml.add_artificial_subjects(holdout_attributes, holdout_classifiers, doing_holdouts=True, feature_count=feature_count, additional_subject_count=20, original_subject_count=subject_count)
-# RNN.RNN_model(attributes, classifier, holdout_attributes=holdout_attributes, holdout_classifiers=holdout_classifiers, input_dim=feature_count, subject_count=60+adding_artificial_subjects, artificial_count=adding_artificial_subjects)
+# NN.NN_model(attributes, classifier, holdout_attributes=holdout_attributes, holdout_classifiers=holdout_classifiers, input_dim=feature_count, subject_count=60+adding_artificial_subjects, artificial_count=adding_artificial_subjects)

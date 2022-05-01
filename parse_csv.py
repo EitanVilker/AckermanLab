@@ -87,7 +87,44 @@ def parse_csv(dim_x, dim_y, filename=False, data=False, group_number=0):
             for j in range(dim_x):
                 mean_attributes[j] /= subject_count
         mean_animals[str(i)] = mean_attributes
-    
+
+    # Remove specific features for testing - 4 best binary knn
+    # attributes = attributes.drop("aRhIgG.PE.low.G73", axis=1)
+    # attributes = attributes.drop("aRhIgG.PE.low.J08.V1V2.E660.2A5.AVI.His", axis=1)
+    # attributes = attributes.drop("R3A.3.C1.TR", axis=1)
+    # attributes = attributes.drop("DiNaNSialic Acid", axis=1)
+
+    # Remove 4 best features not IgAs, IgGs, or FcGRs - binary knn
+    # attributes = attributes.drop("DiNaNSialic Acid", axis=1)
+    # attributes = attributes.drop("MIP1β", axis=1)
+    # attributes = attributes.drop("G2S1B", axis=1)    
+    # attributes = attributes.drop("hC1q.SIVmac1A11.gp140", axis=1)
+
+    # Remove specific features for testing - 4 best arms sgd
+    # attributes = attributes.drop("ADNP gp140", axis=1)
+    # attributes = attributes.drop("aRhIgG.PE.low.SIVmac239.gp140", axis=1)
+    # attributes = attributes.drop("rIgG_high.SIVmac239.gp120", axis=1)
+    # attributes = attributes.drop("ADCP gp140", axis=1)
+
+    # Remove 4 best features not IgAs, IgGs, or FcGRs - arms sgd
+    # attributes = attributes.drop("ADNP gp140", axis=1)
+    # attributes = attributes.drop("G2S1", axis=1)
+    # attributes = attributes.drop("G0F", axis=1)
+    # attributes = attributes.drop("G0", axis=1)
+
+    # Remove specific features for testing - 4 best challenges ridge
+    # attributes = attributes.drop("R2A.4.high.C1.TR", axis=1)
+    # attributes = attributes.drop("R3A.3.V1a", axis=1)
+    # attributes = attributes.drop("hFcgRIIIb.SIVsmE543.gp140", axis=1)
+    # attributes = attributes.drop("hFcgRIIa.SIVmac1A11.gp140", axis=1)
+
+    # Remove 4 best features not IgAs, IgGs, or FcGRs - challenges ridge
+    # attributes = attributes.drop("G0FB", axis=1)
+    # attributes = attributes.drop("C1q.SIVsm.E660.2A5", axis=1)
+    # attributes = attributes.drop("C1q.G73", axis=1)
+    # attributes = attributes.drop("G1.2", axis=1)
+
+
     return attributes, classifier1, classifier2, classifier3, classifier4, classifier5, classifier6, averages, standard_deviations, mean_animals
 
 ''' Parses the smaller csv, MOESM4. Rarely used so may be out of date '''
@@ -194,6 +231,21 @@ def get_usable_data_correlation(folder, file1, file2):
             elif line == "AE239":
                 out_file1.write("2\n")
         count += 1
+
+def get_results_sfs(folder, file1, file2):
+    data = open(folder + "/" + file1)
+    out_file1 = open(folder + "/" + file2, "w")
+
+    lines = data.readlines()
+    count = 0
+    for line in lines:
+        if count % 4 == 0:
+            line = line.split()
+            out_file1.write(str(line[6][:5]) + "\n")
+        count += 1
+
+    data.close()
+    out_file1.close()
 
 def remove_brackets(folder, file1, file2):
     data = open(folder + "/" + file1)
@@ -307,4 +359,5 @@ if __name__ == "__main__":
     # get_usable_data_nn("output", "output0.csv", "output1.csv", "output2.csv", "output3.csv", "output4.csv")
     # get_usable_data_sfs("output", "output0.csv", "output1.csv", "output2.csv", "output3.csv", "output4.csv")
     # get_usable_data_correlation("output", "output0.csv", "output4.csv")
-    remove_brackets("output", "output0.csv", "output1.csv")
+    # remove_brackets("output", "output0.csv", "output1.csv")
+    get_results_sfs("output", "output5.csv", "output3.csv")

@@ -640,15 +640,18 @@ def sequential_feature_selection(attributes, classifier, estimator=None, test_co
     if estimator is None:
         # estimator = KNeighborsClassifier(n_neighbors=5)
         # estimator = make_pipeline(StandardScaler(), linear_model.SGDClassifier(max_iter=1000, tol=1e-3, penalty='elasticnet'))
-        estimator = linear_model.Ridge(alpha=0.1, solver="saga")
+        # estimator = linear_model.Ridge(alpha=0.1, solver="saga")
+        estimator = linear_model.LinearRegression()
+        # estimator = SVC(kernel='linear')
 
     if estimator is not None:
-        sfs = SFS(estimator, k_features=50, forward=True, floating=False, verbose=2,scoring='neg_mean_squared_error', cv=10)
+        sfs = SFS(estimator, k_features=22, forward=True, floating=False, verbose=2,scoring='neg_mean_squared_error', cv=10)
+        # sfs = SFS(estimator, k_features=22, forward=True, floating=False, verbose=2,scoring='balanced_accuracy', cv=10)
         sfs.fit(attributes, classifier)
         print(sfs.k_feature_names_)
         print(sfs.k_score_)
         print(sfs.subsets_)
-        return sfs.transform(attributes)
+        return sfs
 
 ''' Function to separate holdouts for validation testing '''
 def get_holdouts(attributes, classifier, holdout_proportion=0.2, subject_count=60):
